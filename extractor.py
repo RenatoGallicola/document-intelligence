@@ -1,14 +1,15 @@
 import os
 import json
 import time
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from pathlib import Path
 from schemas.competitor_report import CompetitorReportSchema
 from config import DOCUMENT_TYPES
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
 def load_pdf(pdf_path: str) -> bytes:
@@ -22,16 +23,25 @@ def call_gemini(pdf_bytes: bytes, prompt: str, model_name: str) -> str:
     Send a PDF and a prompt to Gemini and return the raw text response.
     Retries once on failure with a 5 second delay.
     """
-    model = genai.GenerativeModel(model_name)
-    pdf_part = {"mime_type": "application/pdf", "data": pdf_bytes}
-
     try:
-        response = model.generate_content([pdf_part, prompt])
+        response = client.models.generate_content(
+            model=model_name,
+            contents=[
+                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+                prompt
+            ]
+        )
         return response.text
     except Exception as e:
         print(f"Gemini call failed: {e}. Retrying in 5 seconds...")
         time.sleep(5)
-        response = model.generate_content([pdf_part, prompt])
+        response = client.models.generate_content(
+            model=model_name,
+            contents=[
+                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+                prompt
+            ]
+        )
         return response.text
 
 

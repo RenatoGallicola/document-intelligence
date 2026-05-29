@@ -26,7 +26,7 @@ DOCUMENT_TYPES = {
     "competitor_report": {
         "schema": CompetitorReportSchema,
         "prompt": EXTRACTION_PROMPT_COMPETITOR,
-        "model": "gemini-2.0-flash",
+        "model": "gemini-1.5-flash",
         "storage_table": "competitor_signals",
     },
     "internal_report": {
@@ -38,7 +38,7 @@ DOCUMENT_TYPES = {
     "market_report": {
         "schema": None,
         "prompt": None,
-        "model": "gemini-2.0-flash",
+        "model": "gemini-1.5-flash",
         "storage_table": "market_signals",
     },
 }
