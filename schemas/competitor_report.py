@@ -25,29 +25,45 @@ class SignalDirection(str, Enum):
 class RegionalSignal(BaseModel):
     region: str = Field(description="Geographic region or country mentioned")
     signal: SignalDirection
-    evidence: str = Field(description="Direct quote or paraphrase from the document")
+    evidence: Optional[str] = Field(None, description="Key data point or quote supporting the signal")
+
+
+class SegmentData(BaseModel):
+    segment_name: str
+    revenue: Optional[float] = Field(None, description="Segment revenue in millions")
+    yoy_growth_pct: Optional[float] = Field(None, description="YoY growth as decimal")
+    operating_margin_pct: Optional[float] = Field(None, description="Operating margin as decimal")
 
 
 class CompetitorReportSchema(BaseModel):
+
     # identifiers
     competitor_name: Optional[str] = Field(None, description="Company name")
-    report_period: Optional[str] = Field(None, description="e.g. Q1 2025, FY2024")
-    report_type: Optional[str] = Field(None, description="e.g. earnings release, annual report, investor presentation")
+    report_period: Optional[str] = Field(None, description="Reporting period, e.g. FY2024, Q1 2025")
+    report_type: Optional[str] = Field(None, description="Type of report, e.g. annual report, earnings release")
+    report_currency: Optional[str] = Field(None, description="Currency used for financial figures, e.g. USD, EUR")
 
-    # financials
-    tools_segment_revenue: Optional[float] = Field(None, description="Revenue of the tools or construction segment in millions")
-    tools_segment_currency: Optional[str] = Field(None, description="Currency of the revenue figure")
-    tools_segment_yoy_growth_pct: Optional[float] = Field(None, description="Year-over-year growth as decimal, e.g. 0.05 for 5%")
+    # company-level financials
+    total_revenue: Optional[float] = Field(None, description="Total company revenue in millions")
+    total_revenue_yoy_growth_pct: Optional[float] = Field(None, description="Total revenue YoY growth as decimal")
     gross_margin_pct: Optional[float] = Field(None, description="Gross margin as decimal")
-    inventory_days: Optional[float] = Field(None, description="Days of inventory on hand if reported")
+    operating_margin_pct: Optional[float] = Field(None, description="Operating margin as decimal")
+
+    # tools/construction segment
+    tools_segment_revenue: Optional[float] = Field(None, description="Revenue of the segment most comparable to Example Corp's business in millions")
+    tools_segment_yoy_growth_pct: Optional[float] = Field(None, description="YoY growth of the tools segment as decimal")
+    tools_segment_margin_pct: Optional[float] = Field(None, description="Operating margin of the tools segment as decimal")
+    tools_segment_name: Optional[str] = Field(None, description="Name used by this company for the tools segment")
+
+    # all segments
+    segment_breakdown: list[SegmentData] = Field(default_factory=list, description="All business segments reported")
 
     # qualitative signals
-    geographic_commentary: Optional[str] = Field(None, description="Commentary on geographic performance, max 3 sentences")
-    demand_outlook: Optional[str] = Field(None, description="Forward-looking demand commentary, max 2 sentences")
-    regional_signals: list[RegionalSignal] = Field(default_factory=list)
+    regional_signals: list[RegionalSignal] = Field(default_factory=list, description="Regional demand signals")
+    macro_construction_commentary: Optional[str] = Field(None, description="Construction market conditions, max 2 sentences")
     guidance_direction: GuidanceDirection = Field(GuidanceDirection.NOT_PROVIDED)
-    macro_construction_commentary: Optional[str] = Field(None, description="Any mention of construction market conditions")
+    guidance_details: Optional[str] = Field(None, description="Specific guidance figures or commentary, max 2 sentences")
 
     # metadata
     confidence: ConfidenceLevel = Field(ConfidenceLevel.LOW)
-    extraction_notes: Optional[str] = Field(None, description="Any ambiguities or issues encountered during extraction")
+    extraction_notes: Optional[str] = Field(None, description="Ambiguities, caveats, or important context")
