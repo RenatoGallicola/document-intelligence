@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 from schemas.competitor_report import CompetitorReportSchema
 from config import DOCUMENT_TYPES
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from google.genai.errors import ClientError
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -17,32 +19,25 @@ def load_pdf(pdf_path: str) -> bytes:
     with open(pdf_path, "rb") as f:
         return f.read()
 
-
+@retry(
+    retry=retry_if_exception_type(ClientError),
+    wait=wait_exponential(multiplier=1, min=2, max=60),
+    stop=stop_after_attempt(4)
+)
 def call_gemini(pdf_bytes: bytes, prompt: str, model_name: str) -> str:
     """
     Send a PDF and a prompt to Gemini and return the raw text response.
-    Retries once on failure with a 5 second delay.
+    Retries up to 4 times with exponential backoff on ClientError (429, 503).
     """
-    try:
-        response = client.models.generate_content(
-            model=model_name,
-            contents=[
-                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
-                prompt
-            ]
-        )
-        return response.text
-    except Exception as e:
-        print(f"Gemini call failed: {e}. Retrying in 5 seconds...")
-        time.sleep(5)
-        response = client.models.generate_content(
-            model=model_name,
-            contents=[
-                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
-                prompt
-            ]
-        )
-        return response.text
+    response = client.models.generate_content(
+        model=model_name,
+        contents=[
+            types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+            prompt
+        ],
+        config={"temperature": 0}
+    )
+    return response.text
 
 
 def parse_response(raw_text: str, document_type: str) -> dict:

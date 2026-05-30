@@ -97,16 +97,33 @@ def process_batch(pdf_dir: str, document_type: str, output_dir: str = "output") 
 
 
 if __name__ == "__main__":
-    """
-    Quick test — drop a PDF in test_pdfs/ and run:
-        python pipeline.py
-    """
-    result = process_document(
-        pdf_path="test_pdfs/test.pdf",
-        document_type="competitor_report",
-        output_dir="output"
-    )
+    import argparse
 
-    if result["validated"]:
-        print(f"\nExtracted data:")
-        print(result["validated"].model_dump())
+    parser = argparse.ArgumentParser(description="Competitor report extraction pipeline")
+    parser.add_argument(
+        "files",
+        nargs="*",
+        help="Specific PDF files to process. If omitted, processes all PDFs in input/"
+    )
+    parser.add_argument(
+        "--type",
+        default="competitor_report",
+        help="Document type (default: competitor_report)"
+    )
+    args = parser.parse_args()
+
+    if args.files:
+        # process only the specified files
+        for file in args.files:
+            process_document(
+                pdf_path=file,
+                document_type=args.type,
+                output_dir="output"
+            )
+    else:
+        # process all PDFs in input/
+        process_batch(
+            pdf_dir="input",
+            document_type=args.type,
+            output_dir="output"
+        )
