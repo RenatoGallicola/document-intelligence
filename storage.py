@@ -3,29 +3,28 @@ from pathlib import Path
 from datetime import datetime
 
 
-def save_to_json(validated_instance, output_dir: str = "output") -> str:
+def save_to_json(validated_instance, output_dir: str = "output", source_filename: str = "") -> str:
     """
     Save a validated extraction result to a JSON file locally.
-    Used during local development before Fabric integration.
 
     Args:
         validated_instance: validated Pydantic model instance
         output_dir: directory where the JSON file will be saved
+        source_filename: original PDF filename used as base for output name
 
     Returns:
         path to the saved file
     """
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    competitor = validated_instance.competitor_name or "unknown"
-    period = validated_instance.report_period or "unknown"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # build filename from competitor name, period and timestamp
-    safe_competitor = competitor.replace(" ", "_").lower()
-    safe_period = period.replace(" ", "_").lower()
-    filename = f"{safe_competitor}_{safe_period}_{timestamp}.json"
+    if source_filename:
+        base = Path(source_filename).stem.replace(" ", "_").lower()
+    else:
+        base = "document"
 
+    filename = f"{base}_{timestamp}.json"
     output_path = Path(output_dir) / filename
 
     with open(output_path, "w", encoding="utf-8") as f:
