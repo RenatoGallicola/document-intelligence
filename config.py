@@ -34,6 +34,11 @@ Rules:
     "medium" if data requires interpretation or segment mapping
     "low" if data is inferred or uncertain
 - extraction_notes: flag ambiguities, unusual structures, or important caveats
+- if exact segment revenue is not reported but percentage composition is available,
+  calculate the absolute value from total revenue and report it with confidence "medium".
+  Always prefer calculated values over null.
+- guidance_direction: mark as "lowered" if the company forecasts lower revenue OR lower
+  profit compared to the current period, even if not explicitly stated as guidance.
 
 JSON Schema to follow exactly:
 {schema_str}
