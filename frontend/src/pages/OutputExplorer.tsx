@@ -17,154 +17,280 @@ const topbarStyle: React.CSSProperties = {
   flexShrink: 0,
 }
 
-const sectionLabel: React.CSSProperties = {
+const monoLabel: React.CSSProperties = {
   fontFamily: 'DM Mono, monospace',
   fontSize: 10,
-  fontWeight: 300,
   color: '#444440',
-  letterSpacing: '0.12em',
+  letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  marginBottom: 12,
+  marginBottom: 4,
 }
 
+// --- type guards ---
+
 function isEvidencedValue(value: unknown): value is { value: number | null; evidence: string | null } {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'value' in value &&
-    Object.keys(value).every(k => ['value', 'evidence'].includes(k))
-  )
+  if (typeof value !== 'object' || value === null) return false
+  const keys = Object.keys(value)
+  return keys.length <= 2 && keys.every(k => ['value', 'evidence'].includes(k)) && 'value' in value
 }
 
 function isListOfDicts(value: unknown): value is Record<string, unknown>[] {
   return Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null
 }
 
-function FieldValue({ name, value }: { name: string; value: unknown }) {
-  const label = name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+function isSimple(value: unknown): boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+}
 
+// --- field categorization ---
+
+type FieldCategory = 'simple' | 'evidenced' | 'list' | 'meta'
+
+const META_KEYS = new Set(['confidence', 'extraction_notes'])
+
+function categorize(key: string, value: unknown): FieldCategory | null {
   if (value === null || value === undefined) return null
+  if (META_KEYS.has(key)) return 'meta'
+  if (isEvidencedValue(value)) return 'evidenced'
+  if (isListOfDicts(value)) return 'list'
+  if (isSimple(value)) return 'simple'
+  return null
+}
 
-  if (isEvidencedValue(value)) {
-    if (value.value === null) return null
-    return (
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
-        <div style={{ fontSize: 13, color: '#e8e6e0' }}>{String(value.value)}</div>
-        {value.evidence && (
-          <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#3a3a36', marginTop: 3, letterSpacing: '0.03em' }}>
-            {value.evidence}
-          </div>
-        )}
-      </div>
-    )
+function formatLabel(key: string): string {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// --- sub-components ---
+
+function SignalBadge({ signal }: { signal: string }) {
+  const map: Record<string, { bg: string; color: string; border: string }> = {
+    positive: { bg: '#0d1f12', color: '#4a7c59', border: '#1a3020' },
+    negative: { bg: '#1a0d0d', color: '#c85050', border: '#3a1a1a' },
+    neutral: { bg: '#1a1608', color: '#c8a96e', border: '#3a3020' },
   }
-
-  if (isListOfDicts(value)) {
-    return (
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.06em', marginBottom: 8 }}>{label}</div>
-        {value.map((item, i) => {
-          const title = Object.values(item).find(v => typeof v === 'string') as string || `Item ${i + 1}`
-          return (
-            <ExpandableItem key={i} title={title} item={item} />
-          )
-        })}
-      </div>
-    )
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) return null
-    return (
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
-        <div style={{ fontSize: 13, color: '#e8e6e0' }}>{value.join(', ')}</div>
-      </div>
-    )
-  }
-
+  const s = map[signal] || map.neutral
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 13, color: '#e8e6e0' }}>{String(value)}</div>
-    </div>
+    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
+      {signal}
+    </span>
   )
 }
 
-function ExpandableItem({ title, item }: { title: string; item: Record<string, unknown> }) {
+function ExpandableRow({ item }: { item: Record<string, unknown> }) {
   const [open, setOpen] = useState(false)
+  const title = Object.values(item).find(v => typeof v === 'string') as string || 'Item'
 
   return (
     <div style={{ border: '1px solid #1a1a18', borderRadius: 3, marginBottom: 6, overflow: 'hidden' }}>
       <button
         onClick={() => setOpen(!open)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '8px 12px', background: '#111110', border: 'none', cursor: 'pointer',
-          color: '#888880', fontFamily: 'DM Sans, sans-serif', fontSize: 12, textAlign: 'left',
-        }}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#111110', border: 'none', cursor: 'pointer', color: '#888880', fontFamily: 'DM Sans, sans-serif', fontSize: 12, textAlign: 'left' }}
       >
         {title}
-        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
       </button>
       {open && (
-        <div style={{ padding: '12px', background: '#0d0d0b', borderTop: '1px solid #1a1a18' }}>
-          {Object.entries(item).map(([k, v]) => (
-            <FieldValue key={k} name={k} value={v} />
-          ))}
+        <div style={{ padding: 12, background: '#0d0d0b', borderTop: '1px solid #1a1a18' }}>
+          {Object.entries(item).map(([k, v]) => {
+            if (v === null || v === undefined) return null
+            const label = formatLabel(k)
+
+            // signal field — render badge
+            if (k === 'signal' && typeof v === 'string') {
+              return (
+                <div key={k} style={{ marginBottom: 8 }}>
+                  <div style={monoLabel}>{label}</div>
+                  <SignalBadge signal={v} />
+                </div>
+              )
+            }
+
+            // evidenced value inside item
+            if (isEvidencedValue(v)) {
+              if (v.value === null) return null
+              return (
+                <div key={k} style={{ marginBottom: 8 }}>
+                  <div style={monoLabel}>{label}</div>
+                  <div style={{ fontSize: 13, color: '#e8e6e0' }}>{String(v.value)}</div>
+                  {v.evidence && <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#3a3a36', marginTop: 2 }}>{v.evidence}</div>}
+                </div>
+              )
+            }
+
+            return (
+              <div key={k} style={{ marginBottom: 8 }}>
+                <div style={monoLabel}>{label}</div>
+                <div style={{ fontSize: 12, color: '#b8b6b0', lineHeight: 1.5 }}>{String(v)}</div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
   )
 }
 
-function SignalBadge({ signal }: { signal: string }) {
-  const colors: Record<string, { bg: string; color: string; border: string }> = {
-    positive: { bg: '#0d1f12', color: '#4a7c59', border: '#1a3020' },
-    negative: { bg: '#1a0d0d', color: '#c85050', border: '#3a1a1a' },
-    neutral: { bg: '#1a1608', color: '#c8a96e', border: '#3a3020' },
+// --- document title inference ---
+// tries common identifier fields in order; falls back to filename
+
+const TITLE_KEYS = ['competitor_name', 'company_name', 'title', 'name', 'document_title', 'issuer']
+const SUBTITLE_KEYS = ['report_period', 'period', 'fiscal_year', 'date', 'report_type', 'type']
+const CURRENCY_KEYS = ['report_currency', 'currency']
+
+function inferTitle(data: Record<string, unknown>, fallback: string): string {
+  for (const k of TITLE_KEYS) {
+    if (typeof data[k] === 'string' && data[k]) return data[k] as string
   }
-  const style = colors[signal] || colors.neutral
-  return (
-    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: style.bg, color: style.color, border: `1px solid ${style.border}` }}>
-      {signal}
-    </span>
-  )
+  return fallback
 }
+
+function inferSubtitleParts(data: Record<string, unknown>): string[] {
+  return [...SUBTITLE_KEYS, ...CURRENCY_KEYS]
+    .filter(k => typeof data[k] === 'string' && data[k])
+    .map(k => data[k] as string)
+    .slice(0, 3)
+}
+
+function formatDocumentType(type: string): string {
+  return type
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function inferDocumentType(data: Record<string, unknown>): string {
+  const docType = data.document_type
+
+  if (typeof docType === 'string' && docType) {
+    return formatDocumentType(docType)
+  }
+
+  return 'Unknown document type'
+}
+
+// --- filename formatting ---
+
+function formatFilename(filename: string): string {
+  return filename
+    .replace(/_\d{8}_\d{6}/, '')
+    .replace(/\.json$/, '')
+}
+
+function extractTimestamp(filename: string): string | null {
+  const match = filename.match(/(\d{8}_\d{6})/)
+  if (!match) return null
+
+  const raw = match[1]
+  const formatted = raw.replace(
+    /(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/,
+    '$1-$2-$3 $4:$5:$6'
+  )
+
+  return formatted
+}
+
+// --- main component ---
 
 export default function OutputExplorer() {
   const [outputs, setOutputs] = useState<OutputFile[]>([])
   const [selected, setSelected] = useState<OutputFile | null>(null)
-  const [activeTab, setActiveTab] = useState<'fields' | 'signals' | 'raw'>('fields')
-  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'fields' | 'lists' | 'meta' | 'raw'>('fields')
+  const [loadingList, setLoadingList] = useState(true)
+  const [groupByType, setGroupByType] = useState(false)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const [search, setSearch] = useState('')
+  const [userSelected, setUserSelected] = useState(false)
+
+  function toggleGroup(type: string) {
+    setOpenGroups(prev => ({
+      ...prev,
+      [type]: !(prev[type] ?? true)
+    }))
+  }
+
+  function matchesSearch(o: OutputFile, search: string) {
+    if (!search.trim()) return true
+
+    const s = search.toLowerCase()
+
+    const title = inferTitle(o.data, o.filename).toLowerCase()
+    const filename = o.filename.toLowerCase()
+    const type = (o.data?.document_type as string || '').toLowerCase()
+
+    return (
+      title.includes(s) ||
+      filename.includes(s) ||
+      type.includes(s)
+    )
+  }
 
   useEffect(() => {
     axios.get('/api/documents/outputs').then(res => {
       setOutputs(res.data)
       if (res.data.length > 0) setSelected(res.data[0])
-      setLoading(false)
+      setLoadingList(false)
     })
   }, [])
 
+  useEffect(() => {
+    if (!groupByType) return
+
+    const grouped: Record<string, boolean> = {}
+
+    for (const o of outputs) {
+      const type =
+        typeof o.data?.document_type === 'string' && o.data.document_type
+          ? o.data.document_type
+          : 'unknown'
+
+      grouped[type] = true
+    }
+
+    setOpenGroups(grouped)
+  }, [groupByType, outputs])
+
+  useEffect(() => {
+    if (!search.trim()) return
+    if (userSelected) return
+
+    const filtered = outputs.filter(o => matchesSearch(o, search))
+    if (filtered.length === 0) return
+
+    const first = filtered[0]
+
+    if (selected?.filename === first.filename) return
+
+    setSelected(first)
+    setActiveTab('fields')
+  }, [search, outputs])
+
+  useEffect(() => {
+    setUserSelected(false)
+  }, [search])
+
   const data = selected?.data || {}
 
-  const metadataKeys = new Set(['confidence', 'extraction_notes'])
-  const simpleFields: [string, unknown][] = []
-  const evidencedFields: [string, unknown][] = []
-  const listFields: [string, unknown][] = []
-  const metaFields: [string, unknown][] = []
+  // categorize all fields dynamically
+  const simple: [string, unknown][] = []
+  const evidenced: [string, unknown][] = []
+  const lists: [string, unknown][] = []
+  const meta: [string, unknown][] = []
 
   for (const [k, v] of Object.entries(data)) {
-    if (v === null || v === undefined) continue
-    if (metadataKeys.has(k)) { metaFields.push([k, v]); continue }
-    if (isEvidencedValue(v)) { evidencedFields.push([k, v]); continue }
-    if (isListOfDicts(v)) { listFields.push([k, v]); continue }
-    simpleFields.push([k, v])
+    if (k === 'document_type') continue
+    const cat = categorize(k, v)
+    if (cat === 'simple') simple.push([k, v])
+    else if (cat === 'evidenced') evidenced.push([k, v])
+    else if (cat === 'list') lists.push([k, v])
+    else if (cat === 'meta') meta.push([k, v])
   }
 
-  const tabs = ['fields', 'signals', 'raw'] as const
-  const tabLabels = { fields: 'Numeric Fields', signals: 'Regional Signals', raw: 'Raw JSON' }
+  const tabs = [
+    { id: 'fields' as const, label: 'Fields', show: simple.length > 0 || evidenced.length > 0 },
+    { id: 'lists' as const, label: 'Lists', show: lists.length > 0 },
+    { id: 'meta' as const, label: 'Metadata', show: meta.length > 0 },
+    { id: 'raw' as const, label: 'Raw JSON', show: true },
+  ].filter(t => t.show)
 
   return (
     <>
@@ -175,39 +301,208 @@ export default function OutputExplorer() {
         </div>
       </div>
 
-      {loading ? (
+      {loadingList ? (
         <div style={{ padding: 28, fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>Loading...</div>
       ) : outputs.length === 0 ? (
         <div style={{ padding: 28, fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>No outputs found. Process some documents first.</div>
       ) : (
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-          {/* left panel — file list */}
+          {/* left panel */}
           <div style={{ width: 240, minWidth: 240, borderRight: '1px solid #1a1a18', overflowY: 'auto' }}>
-            <div style={{ padding: '16px 16px 8px', ...sectionLabel, marginBottom: 0 }}>Documents</div>
-            {outputs.map(o => (
-              <button
-                key={o.filename}
-                onClick={() => { setSelected(o); setActiveTab('fields') }}
+            
+            <div style={{
+              padding: '12px 12px 8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              borderBottom: '1px solid #1a1a18'
+            }}>
+              {/* SEARCH INPUT */}
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
                 style={{
-                  width: '100%', display: 'block', padding: '10px 16px', background: selected?.filename === o.filename ? '#161614' : 'transparent',
-                  border: 'none', borderLeft: `2px solid ${selected?.filename === o.filename ? '#c8a96e' : 'transparent'}`,
-                  cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+                  background: '#0d0d0b',
+                  border: '1px solid #1a1a18',
+                  color: '#e8e6e0',
+                  fontSize: 10,
+                  padding: '4px 8px',
+                  outline: 'none',
+                  fontFamily: 'DM Sans, sans-serif'
                 }}
-                onMouseEnter={e => { if (selected?.filename !== o.filename) (e.currentTarget as HTMLElement).style.background = '#111110' }}
-                onMouseLeave={e => { if (selected?.filename !== o.filename) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              >
-                <div style={{ fontSize: 11, color: selected?.filename === o.filename ? '#e8e6e0' : '#666660', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {(o.data && (o.data as any).competitor_name as string) || o.filename}
+              />
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontFamily: 'DM Mono, monospace',
+                fontSize: 10,
+                color: '#3a3a36',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase'
+              }}>
+                <div>
+                  Documents
                 </div>
-                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#333330', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {o.filename}
+
+                <button
+                  onClick={() => setGroupByType(v => !v)}
+                  style={{
+                    fontSize: 9,
+                    fontFamily: 'DM Mono, monospace',
+                    background: 'none',
+                    border: '1px solid #1a1a18',
+                    color: groupByType ? '#c8a96e' : '#444440',
+                    padding: '2px 8px',
+                    borderRadius: 2,
+                    cursor: 'pointer'
+                  }}
+                >
+                  GROUP
+                </button>
+              </div>
+
+
+            </div>
+
+            {/* DEFAULT MODE */}
+            {!groupByType && outputs.filter(o => matchesSearch(o, search)).map(o => {
+              const isActive = selected?.filename === o.filename
+              const title = inferTitle(o.data, o.filename)
+
+              return (
+                <button
+                  key={o.filename}
+                  onClick={() => {
+                    setSelected(o)
+                    setActiveTab('fields')
+                    setUserSelected(true)
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'block',
+                    padding: '10px 16px',
+                    background: isActive ? '#161614' : 'transparent',
+                    border: 'none',
+                    borderLeft: `2px solid ${isActive ? '#c8a96e' : 'transparent'}`,
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: isActive ? '#e8e6e0' : '#666660', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {title}
+                  </div>
+
+                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#333330', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {inferDocumentType(o.data)}
+                  </div>
+
+                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#333330', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {formatFilename(o.filename)}
+                  </div>
+                </button>
+              )
+            })}
+
+            {/* GROUP MODE */}
+            {groupByType && Object.entries(
+              outputs.filter(o => matchesSearch(o, search)).reduce((acc: Record<string, OutputFile[]>, o) => {
+                const type =
+                  typeof o.data?.document_type === 'string' && o.data.document_type
+                    ? o.data.document_type
+                    : 'unknown'
+
+                if (!acc[type]) acc[type] = []
+                acc[type].push(o)
+                return acc
+              }, {})
+            ).map(([type, items]) => {
+
+              const isOpen = openGroups[type]
+
+              return (
+                <div key={type}>
+                  
+                  {/* GROUP HEADER */}
+                  <button
+                    onClick={() => toggleGroup(type)}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px 16px 6px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'DM Mono, monospace',
+                      fontSize: 10,
+                      color: '#c8a96e',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <span>{formatDocumentType(type)}</span>
+
+                    <span style={{ color: '#444440' }}>
+                      {items.length}
+                    </span>
+                  </button>
+
+                  {/* ITEMS */}
+                  {isOpen && items.map(o => {
+                    const isActive = selected?.filename === o.filename
+
+                    return (
+                      <button
+                        key={o.filename}
+                        onClick={() => { setSelected(o); setActiveTab('fields') }}
+                        style={{
+                          width: '100%',
+                          display: 'block',
+                          padding: '10px 16px',
+                          background: isActive ? '#161614' : 'transparent',
+                          border: 'none',
+                          borderLeft: `2px solid ${isActive ? '#c8a96e' : 'transparent'}`,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div style={{
+                          fontSize: 11,
+                          color: isActive ? '#e8e6e0' : '#666660',
+                          marginBottom: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {inferTitle(o.data, o.filename)}
+                        </div>
+
+                        <div style={{
+                          fontFamily: 'DM Mono, monospace',
+                          fontSize: 9,
+                          color: '#333330',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {formatFilename(o.filename)}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-              </button>
-            ))}
+              )
+
+            })}
           </div>
 
-          {/* right panel — detail */}
+          {/* right panel */}
           {selected && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -215,28 +510,40 @@ export default function OutputExplorer() {
               <div style={{ padding: '16px 24px', borderBottom: '1px solid #1a1a18', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 500, color: '#e8e6e0', marginBottom: 4 }}>
-                      {typeof data.competitor_name === 'string' ? data.competitor_name : selected.filename}
+                    <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#c8a96e', marginBottom: 8 }}>
+                      {inferDocumentType(data)}
                     </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {typeof data.report_period === 'string' && <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#555550' }}>{data.report_period}</span>}
-                      {typeof data.report_type === 'string' && <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440' }}>{data.report_type}</span>}
-                      {typeof data.report_currency === 'string' && <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440' }}>{data.report_currency}</span>}
+                    <div style={{ fontSize: 15, fontWeight: 500, color: '#e8e6e0', marginBottom: 6 }}>
+                      {inferTitle(data, selected.filename)}
+                    </div>
+                    {extractTimestamp(selected.filename) && (
+                      <div style={{
+                        fontFamily: 'DM Mono, monospace',
+                        fontSize: 10,
+                        color: '#444440',
+                        marginBottom: 8
+                      }}>
+                        {extractTimestamp(selected.filename)}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {inferSubtitleParts(data).map((part, i) => (
+                        <span key={i} style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#555550' }}>{part}</span>
+                      ))}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    {typeof data.confidence === 'string' && (
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                    {data.confidence !== undefined && data.confidence !== null && (
                       <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#1a1608', color: '#c8a96e', border: '1px solid #3a3020' }}>
-                        {data.confidence}
+                        {String(data.confidence)}
                       </span>
                     )}
-
                     <a
                       href={`data:application/json,${encodeURIComponent(JSON.stringify(data, null, 2))}`}
                       download={selected.filename}
-                      style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.08em', textDecoration: 'none', padding: '2px 8px', border: '1px solid #1a1a18', borderRadius: 2 }}
-                      onMouseEnter={e => (e.currentTarget.style.color = '#888880')}
-                      onMouseLeave={e => (e.currentTarget.style.color = '#444440')}
+                      style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.08em', textDecoration: 'none', padding: '2px 8px', border: '1px solid #1a1a18', borderRadius: 2 } as React.CSSProperties}
+                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = '#888880' }}
+                      onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = '#444440' }}
                     >
                       Download
                     </a>
@@ -248,17 +555,17 @@ export default function OutputExplorer() {
               <div style={{ display: 'flex', borderBottom: '1px solid #1a1a18', flexShrink: 0 }}>
                 {tabs.map(tab => (
                   <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
                     style={{
                       padding: '10px 20px', background: 'none', border: 'none',
-                      borderBottom: `2px solid ${activeTab === tab ? '#c8a96e' : 'transparent'}`,
-                      color: activeTab === tab ? '#e8e6e0' : '#444440',
+                      borderBottom: `2px solid ${activeTab === tab.id ? '#c8a96e' : 'transparent'}`,
+                      color: activeTab === tab.id ? '#e8e6e0' : '#444440',
                       fontFamily: 'DM Sans, sans-serif', fontSize: 12, cursor: 'pointer',
                       transition: 'all 0.15s', marginBottom: -1,
                     }}
                   >
-                    {tabLabels[tab]}
+                    {tab.label}
                   </button>
                 ))}
               </div>
@@ -268,62 +575,63 @@ export default function OutputExplorer() {
 
                 {activeTab === 'fields' && (
                   <div>
-                    {simpleFields.length > 0 && (
+                    {/* simple fields as grid */}
+                    {simple.length > 0 && (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
-                        {simpleFields.map(([k, v]) => (
+                        {simple.map(([k, v]) => (
                           <div key={k}>
-                            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#444440', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-                              {k.replace(/_/g, ' ')}
-                            </div>
+                            <div style={monoLabel}>{formatLabel(k)}</div>
                             <div style={{ fontSize: 13, color: '#e8e6e0' }}>{String(v)}</div>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {evidencedFields.length > 0 && (
+                    {/* evidenced fields */}
+                    {evidenced.length > 0 && (
                       <>
-                        <div style={{ ...sectionLabel, marginBottom: 12 }}>Numeric Fields</div>
-                        {evidencedFields.map(([k, v]) => <FieldValue key={k} name={k} value={v} />)}
-                      </>
-                    )}
-
-                    {listFields.filter(([k]) => k !== 'regional_signals').length > 0 && (
-                      <>
-                        <div style={{ height: 1, background: '#1a1a18', margin: '16px 0' }} />
-                        {listFields.filter(([k]) => k !== 'regional_signals').map(([k, v]) => <FieldValue key={k} name={k} value={v} />)}
-                      </>
-                    )}
-
-                    {metaFields.length > 0 && (
-                      <>
-                        <div style={{ height: 1, background: '#1a1a18', margin: '16px 0' }} />
-                        <div style={{ ...sectionLabel, marginBottom: 12 }}>Metadata</div>
-                        {metaFields.map(([k, v]) => <FieldValue key={k} name={k} value={v} />)}
+                        {simple.length > 0 && <div style={{ height: 1, background: '#1a1a18', margin: '4px 0 20px' }} />}
+                        {evidenced.map(([k, v]) => {
+                          const ev = v as { value: number | null; evidence: string | null }
+                          if (ev.value === null) return null
+                          return (
+                            <div key={k} style={{ marginBottom: 14 }}>
+                              <div style={monoLabel}>{formatLabel(k)}</div>
+                              <div style={{ fontSize: 13, color: '#e8e6e0', marginBottom: 2 }}>{String(ev.value)}</div>
+                              {ev.evidence && (
+                                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#3a3a36', lineHeight: 1.5 }}>
+                                  {ev.evidence}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
                       </>
                     )}
                   </div>
                 )}
 
-                {activeTab === 'signals' && (
+                {activeTab === 'lists' && (
                   <div>
-                    {(data.regional_signals as Record<string, unknown>[] || []).length === 0 ? (
-                      <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>No regional signals extracted.</div>
-                    ) : (
-                      (data.regional_signals as Record<string, unknown>[]).map((s, i) => (
-                        <div key={i} style={{ borderBottom: '1px solid #1a1a18', paddingBottom: 16, marginBottom: 16 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: '#b8b6b0' }}>{typeof s.region === 'string' ? s.region : ''}</div>
-                            <SignalBadge signal={typeof s.signal === 'string' ? s.signal : 'neutral'} />
-                          </div>
-                          {typeof s.evidence === 'string' && (
-                            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#555550', letterSpacing: '0.03em', lineHeight: 1.6 }}>
-                              {s.evidence}
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
+                    {lists.map(([k, v]) => (
+                      <div key={k} style={{ marginBottom: 24 }}>
+                        <div style={{ ...monoLabel, marginBottom: 10 }}>{formatLabel(k)}</div>
+                        {(v as Record<string, unknown>[]).map((item, i) => (
+                          <ExpandableRow key={i} item={item} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'meta' && (
+                  <div>
+                    {meta.map(([k, v]) => (
+                      <div key={k} style={{ marginBottom: 16 }}>
+                        <div style={monoLabel}>{formatLabel(k)}</div>
+                        <div style={{ fontSize: 13, color: '#b8b6b0', lineHeight: 1.6 }}>{String(v)}</div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -332,6 +640,7 @@ export default function OutputExplorer() {
                     {JSON.stringify(data, null, 2)}
                   </pre>
                 )}
+
               </div>
             </div>
           )}
