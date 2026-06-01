@@ -35,9 +35,9 @@ class RegionalSignal(BaseModel):
 
 class SegmentData(BaseModel):
     segment_name: str
-    revenue: EvidencedValue = Field(default_factory=EvidencedValue, description="Segment revenue in millions")
-    yoy_growth_pct: EvidencedValue = Field(default_factory=EvidencedValue, description="YoY growth as decimal")
-    operating_margin_pct: EvidencedValue = Field(default_factory=EvidencedValue, description="Operating margin as decimal")
+    revenue: Optional[EvidencedValue] = Field(None, description="Segment revenue in millions")
+    yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="YoY growth as decimal")
+    operating_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating margin as decimal")
 
 
 class CompetitorReportSchema(BaseModel):
@@ -49,15 +49,15 @@ class CompetitorReportSchema(BaseModel):
     report_currency: Optional[str] = Field(None, description="Currency used for financial figures, e.g. USD, EUR")
 
     # company-level financials
-    total_revenue: EvidencedValue = Field(default_factory=EvidencedValue, description="Total company revenue in millions")
-    total_revenue_yoy_growth_pct: EvidencedValue = Field(default_factory=EvidencedValue, description="Total revenue YoY growth as decimal")
-    gross_margin_pct: EvidencedValue = Field(default_factory=EvidencedValue, description="Gross margin as decimal")
-    operating_margin_pct: EvidencedValue = Field(default_factory=EvidencedValue, description="Operating margin as decimal")
+    total_revenue: Optional[EvidencedValue] = Field(None, description="Total company revenue in millions")
+    total_revenue_yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="Total revenue YoY growth as decimal")
+    gross_margin_pct: Optional[EvidencedValue] = Field(None, description="Gross margin as decimal")
+    operating_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating margin as decimal")
 
     # tools/construction segment
-    tools_segment_revenue: EvidencedValue = Field(default_factory=EvidencedValue, description="Revenue of the segment most comparable to Example Corp's business in millions")
-    tools_segment_yoy_growth_pct: EvidencedValue = Field(default_factory=EvidencedValue, description="YoY growth of the tools segment as decimal")
-    tools_segment_margin_pct: EvidencedValue = Field(default_factory=EvidencedValue, description="Operating margin of the tools segment as decimal")
+    tools_segment_revenue: Optional[EvidencedValue] = Field(None, description="Revenue of the segment most comparable to Example Corp's business in millions")
+    tools_segment_yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="YoY growth of the tools segment as decimal")
+    tools_segment_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating margin of the tools segment as decimal")
     tools_segment_name: Optional[str] = Field(None, description="Name used by this company for the tools segment")
 
     # all segments
