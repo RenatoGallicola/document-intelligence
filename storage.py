@@ -3,12 +3,12 @@ from pathlib import Path
 from datetime import datetime
 
 
-def save_to_json(validated_instance, output_dir: str = "output", source_filename: str = "") -> str:
+def save_to_json(data, output_dir: str = "output", source_filename: str = "") -> str:
     """
     Save a validated extraction result to a JSON file locally.
 
     Args:
-        validated_instance: validated Pydantic model instance
+        data: validated Pydantic model instance or dict
         output_dir: directory where the JSON file will be saved
         source_filename: original PDF filename used as base for output name
 
@@ -27,8 +27,12 @@ def save_to_json(validated_instance, output_dir: str = "output", source_filename
     filename = f"{base}_{timestamp}.json"
     output_path = Path(output_dir) / filename
 
+    # normalize input (Pydantic -> dict if needed)
+    if hasattr(data, "model_dump"):
+        data = data.model_dump()
+
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(validated_instance.model_dump(), f, indent=2, ensure_ascii=False)
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
     print(f"Saved to: {output_path}")
     return str(output_path)
@@ -42,7 +46,7 @@ def save_to_delta(validated_instance, table_name: str, spark=None):
     Args:
         validated_instance: validated Pydantic model instance
         table_name: name of the Delta table in the default lakehouse
-        spark: active Spark session (passed explicitly to avoid global state)
+        spark: active Spark session (must be passed explicitly)
     """
     if spark is None:
         raise RuntimeError("A Spark session is required to save to Delta. Pass spark=spark.")
@@ -53,8 +57,10 @@ def save_to_delta(validated_instance, table_name: str, spark=None):
 
     # flatten regional_signals list to JSON string for Delta compatibility
     data["regional_signals"] = json.dumps(
-        [signal if isinstance(signal, dict) else signal.model_dump()
-         for signal in data.get("regional_signals", [])]
+        [
+            signal if isinstance(signal, dict) else signal.model_dump()
+            for signal in data.get("regional_signals", [])
+        ]
     )
 
     # add ingestion timestamp

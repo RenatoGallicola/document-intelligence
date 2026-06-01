@@ -47,7 +47,10 @@ def process_document(pdf_path: str, document_type: str, output_dir: str = "outpu
         print(f"  Missing          : {', '.join(summary['missing_fields'])}")
 
     # step 3 — save
-    output_path = save_to_json(validated, output_dir, source_filename=pdf_path)
+    result_data = validated.model_dump()
+    result_data["document_type"] = document_type
+
+    output_path = save_to_json(result_data, output_dir, source_filename=pdf_path)
 
     return {
         "validated": validated,

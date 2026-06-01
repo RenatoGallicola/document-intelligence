@@ -48,7 +48,11 @@ async def process_document(
 def list_outputs():
     OUTPUT_DIR.mkdir(exist_ok=True)
     outputs = []
-    for f in sorted(OUTPUT_DIR.glob("*.json"), reverse=True):
+    for f in sorted(
+        OUTPUT_DIR.glob("*.json"),
+        key=lambda f: f.stat().st_mtime,
+        reverse=True
+    ):
         try:
             with open(f, "r", encoding="utf-8") as fp:
                 data = json.load(fp)
