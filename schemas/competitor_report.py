@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional
 from enum import Enum
 
@@ -26,10 +26,24 @@ class EvidencedValue(BaseModel):
     value: Optional[float] = Field(None, description="Extracted numeric value")
     evidence: Optional[str] = Field(None, description="Exact location and quote from the document, e.g. 'Page 8, Financial Summary table, Net Sales row: $15,130.4 million'")
 
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_scalar(cls, v):
+        if isinstance(v, (int, float)):
+            return {"value": float(v), "evidence": None}
+        return v
+
 
 class EvidencedStr(BaseModel):
     value: Optional[str] = Field(None, description="Extracted text value")
     evidence: Optional[str] = Field(None, description="Exact location and quote from the document")
+
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_scalar(cls, v):
+        if isinstance(v, str):
+            return {"value": v, "evidence": None}
+        return v
 
 
 class SegmentData(BaseModel):
