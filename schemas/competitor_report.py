@@ -46,6 +46,7 @@ class RegionalData(BaseModel):
     yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="Reported YoY revenue growth as decimal")
     organic_growth_pct: Optional[EvidencedValue] = Field(None, description="Organic YoY growth as decimal, excluding FX and M&A effects")
     signal: Optional[SignalDirection] = Field(None, description="Overall demand signal for this region: positive, neutral, or negative")
+    commentary: Optional[str] = Field(None, description="Management commentary on this region's performance or outlook, max 1-2 sentences")
 
 
 class CompetitorReportSchema(BaseModel):
@@ -63,6 +64,7 @@ class CompetitorReportSchema(BaseModel):
     total_revenue_yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="Reported total revenue YoY growth as decimal, including FX and M&A effects")
     total_revenue_organic_growth_pct: Optional[EvidencedValue] = Field(None, description="Organic revenue growth as decimal, excluding FX translation and M&A. Only extract if explicitly stated — do not calculate.")
     fx_impact_pct: Optional[EvidencedValue] = Field(None, description="FX translation impact on revenue growth as decimal (negative = headwind, e.g. -0.03 = -3pp drag)")
+    m_and_a_impact_pct: Optional[EvidencedValue] = Field(None, description="M&A contribution to revenue growth as decimal (positive = acquired growth, negative = divested revenue). Excludes FX and organic. Only extract if explicitly stated.")
     gross_margin_pct: Optional[EvidencedValue] = Field(None, description="Gross margin as decimal")
     operating_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating (EBIT) margin as decimal")
     ebitda_margin_pct: Optional[EvidencedValue] = Field(None, description="EBITDA margin as decimal. Use adjusted EBITDA if reported.")
@@ -75,6 +77,10 @@ class CompetitorReportSchema(BaseModel):
     tools_segment_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating margin of the tools segment as decimal")
     professional_revenue: Optional[EvidencedValue] = Field(None, description="Revenue attributable specifically to professional/commercial end users in millions, if separately disclosed (e.g. SBD 'Professional' sub-segment)")
     professional_vs_diy_mix: Optional[EvidencedStr] = Field(None, description="Description of professional vs. consumer/DIY revenue split if reported, e.g. '60% professional, 40% consumer'")
+
+    # --- order dynamics ---
+    order_intake_mln: Optional[EvidencedValue] = Field(None, description="Order intake / new orders received in the period in millions. Relevant for capital goods / order-based companies (e.g. Atlas Copco). Leave null if not reported.")
+    order_backlog_mln: Optional[EvidencedValue] = Field(None, description="Order backlog / order book at period end in millions. Leave null if not reported.")
 
     # --- all segments ---
     segment_breakdown: list[SegmentData] = Field(default_factory=list, description="All business segments reported by the company with available financials")

@@ -22,6 +22,18 @@ FX IMPACT
 - fx_impact_pct: look for "foreign exchange headwind/tailwind of X%" or "currency impact of X bps".
   Convert basis points to decimal (300bps = 0.03). Negative means headwind (drag on growth).
 
+M&A IMPACT
+- m_and_a_impact_pct: look for "acquisition contribution of X%", "M&A impact of X pp",
+  "portfolio changes added/removed X pp from growth", or similar phrasing.
+- Positive = inorganic growth from acquisitions. Negative = revenue lost from divestitures.
+- Only extract if explicitly stated — do not calculate from reported minus organic minus FX.
+
+ORDER DYNAMICS
+- order_intake_mln / order_backlog_mln: extract only for companies that report an order book
+  (e.g. Atlas Copco, industrial equipment companies). Leave null for distribution-model companies
+  like SBD, Makita, or Bosch that do not report order intake as a metric.
+- order_intake is a 1-2 quarter leading indicator of future revenue — capture it carefully.
+
 TOOLS SEGMENT MAPPING
 - Map the segment most comparable to Example Corp's business (professional power tools, anchors, fastening,
   measuring systems) to tools_segment_*.
@@ -47,6 +59,8 @@ REGIONAL BREAKDOWN
 - signal: infer from growth data — positive if organic growth > 0, negative if < 0, neutral if flat or mixed.
 - If only qualitative commentary exists for a region (no numbers), still create a RegionalData entry
   with revenue and growth_pct null, and set the signal based on the commentary.
+- commentary: capture any management quote or statement about this region's conditions or outlook,
+  max 1-2 sentences. Leave null only if no regional commentary exists.
 
 QUALITATIVE SIGNALS
 - construction_demand_signal: focus on non-residential and infrastructure construction. Ignore residential
