@@ -2,6 +2,8 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pathlib import Path
 import json
 import shutil
+from fastapi import HTTPException
+from pathlib import Path
 
 router = APIRouter()
 INPUT_DIR = Path("input")
@@ -64,3 +66,16 @@ def list_outputs():
         except Exception:
             continue
     return outputs
+
+@router.delete("/outputs/{filename}")
+def delete_output(filename: str):
+    file_path = OUTPUT_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        file_path.unlink()
+        return {"success": True, "deleted": filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

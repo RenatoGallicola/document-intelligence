@@ -14,20 +14,14 @@ class APIKeyUpdate(BaseModel):
     api_key: str
 
 
-class SettingsResponse(BaseModel):
-    api_key_set: bool
-    api_key_preview: str
-    model: str
-
-
-@router.get("", response_model=SettingsResponse)
+@router.get("")
 def get_settings():
     key = os.getenv("GEMINI_API_KEY", "")
-    preview = f"{key[:8]}...{key[-4:]}" if len(key) > 12 else "not set"
+    preview = f"{key[:8]}...{key[-4:]}" if len(key) > 12 else "API KEY not set"
     return {
         "api_key_set": bool(key),
         "api_key_preview": preview,
-        "model": "gemini-3.5-flash"
+        "model": os.getenv("DEFAULT_MODEL", "gemini-3.5-flash")
     }
 
 
@@ -35,3 +29,24 @@ def get_settings():
 def update_api_key(body: APIKeyUpdate):
     set_key(str(ENV_PATH), "GEMINI_API_KEY", body.api_key)
     return {"success": True}
+
+
+@router.post("/model")
+def update_model(body: dict):
+    set_key(str(ENV_PATH), "DEFAULT_MODEL", body["model"])
+    return {"success": True}
+
+
+@router.get("/models")
+def list_models():
+    try:
+        from google import genai
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY", ""))
+        models = [
+            m.name.replace("models/", "")
+            for m in client.models.list()
+            if "generateContent" in (m.supported_actions or [])
+        ]
+        return {"models": models}
+    except Exception as e:
+        return {"models": ["gemini-3.5-flash", "gemini-2.0-flash"], "error": str(e)}
