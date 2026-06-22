@@ -16,16 +16,4 @@ DOCUMENT_TYPES = {
         "model": "gemini-3.5-flash",
         "storage_table": "competitor_signals",
     },
-    "internal_report": {
-        "schema": None,
-        "prompt": None,
-        "model": "azure_openai",
-        "storage_table": "internal_signals",
-    },
-    "market_report": {
-        "schema": None,
-        "prompt": None,
-        "model": "gemini-3.5-flash",
-        "storage_table": "market_signals",
-    },
 }
