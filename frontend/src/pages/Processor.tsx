@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
 import ProgressBar from '../components/ProgressBar'
 
@@ -51,7 +51,23 @@ export default function Processor({ results, onResults, documentType, onDocument
   const [error, setError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const [hovering, setHovering] = useState(false)
+  const [docTypes, setDocTypes] = useState<Array<{ id: string; label: string }>>([])
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    axios.get<Array<{ id: string; class_name: string }>>('/api/schemas').then(res => {
+      const types = res.data.map(s => ({
+        id: s.id,
+        label: s.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      }))
+      setDocTypes(types)
+      if (types.length > 0 && !types.find(t => t.id === documentType)) {
+        onDocumentType(types[0].id)
+      }
+    }).catch(() => {
+      setDocTypes([{ id: 'competitor_report', label: 'Competitor Report' }])
+    })
+  }, [])
 
   const addFiles = (incoming: FileList | null) => {
     if (!incoming) return
@@ -175,9 +191,9 @@ export default function Processor({ results, onResults, documentType, onDocument
               onChange={e => onDocumentType(e.target.value)}
               style={{ width: '100%', background: '#111110', border: '1px solid #1e1e1c', borderRadius: 3, color: '#b8b6b0', fontFamily: 'DM Sans, sans-serif', fontSize: 12, padding: '8px 12px', outline: 'none' }}
             >
-              <option value="competitor_report">Competitor report</option>
-              <option value="market_report">Market report</option>
-              <option value="internal_report">Internal report</option>
+              {docTypes.map(t => (
+                <option key={t.id} value={t.id}>{t.label}</option>
+              ))}
             </select>
           </div>
           <button
