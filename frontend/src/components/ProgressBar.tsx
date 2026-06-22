@@ -64,7 +64,7 @@ export default function ProgressBar({ loading, currentFile, totalFiles, complete
       }}>
         <div style={{
           fontFamily: 'DM Mono, monospace',
-          fontSize: 10,
+          fontSize: 11,
           color: '#555550',
           letterSpacing: '0.05em',
           overflow: 'hidden',
@@ -77,7 +77,7 @@ export default function ProgressBar({ loading, currentFile, totalFiles, complete
         {totalFiles > 1 && (
           <div style={{
             fontFamily: 'DM Mono, monospace',
-            fontSize: 10,
+            fontSize: 11,
             color: '#444440',
             letterSpacing: '0.05em',
             flexShrink: 0,

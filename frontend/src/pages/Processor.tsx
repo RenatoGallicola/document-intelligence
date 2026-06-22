@@ -14,7 +14,7 @@ const topbarStyle: React.CSSProperties = {
 
 const sectionLabel: React.CSSProperties = {
   fontFamily: 'DM Mono, monospace',
-  fontSize: 10,
+  fontSize: 11,
   fontWeight: 300,
   color: '#444440',
   letterSpacing: '0.12em',
@@ -98,7 +98,7 @@ export default function Processor({ results, onResults, documentType, onDocument
     <>
       <div style={topbarStyle}>
         <div style={{ fontSize: 13, fontWeight: 500, color: '#e8e6e0' }}>Processor</div>
-        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#3a3a36', letterSpacing: '0.05em' }}>
+        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', letterSpacing: '0.05em' }}>
           {loading ? 'extracting...' : files.length > 0 ? `${files.length} file${files.length > 1 ? 's' : ''} ready` : results.length > 0 ? `${results.length} result${results.length > 1 ? 's' : ''}` : 'no files selected'}
         </div>
       </div>
@@ -150,7 +150,7 @@ export default function Processor({ results, onResults, documentType, onDocument
             </svg>
           </div>
           <div style={{ fontSize: 13, color: '#888880', marginBottom: 4 }}>Drop PDF files here</div>
-          <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#333330', letterSpacing: '0.05em' }}>or click to browse</div>
+          <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#333330', letterSpacing: '0.05em' }}>or click to browse</div>
         </div>
 
         {/* file list */}
@@ -158,7 +158,7 @@ export default function Processor({ results, onResults, documentType, onDocument
           <div key={f.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#111110', border: '1px solid #1a1a18', borderRadius: 3, marginBottom: 6 }}>
             <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#c8a96e', letterSpacing: '0.05em', border: '1px solid #3a3020', padding: '2px 5px', borderRadius: 2, background: '#1a1608' }}>PDF</div>
             <div style={{ flex: 1, fontSize: 12, color: '#b8b6b0' }}>{f.name}</div>
-            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#333330' }}>{formatBytes(f.size)}</div>
+            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#333330' }}>{formatBytes(f.size)}</div>
             {!loading && (
               <button onClick={() => removeFile(f.name)} style={{ background: 'none', border: 'none', color: '#333330', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px' }}>×</button>
             )}
@@ -169,7 +169,7 @@ export default function Processor({ results, onResults, documentType, onDocument
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 24 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Document type</div>
+            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Document type</div>
             <select
               value={documentType}
               onChange={e => onDocumentType(e.target.value)}
@@ -210,7 +210,7 @@ export default function Processor({ results, onResults, documentType, onDocument
               <div style={sectionLabel as React.CSSProperties & { marginBottom: 0 }}>Results</div>
               <button
                 onClick={() => onResults([])}
-                style={{ background: 'none', border: 'none', fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.08em', cursor: 'pointer', textTransform: 'uppercase', padding: 0 }}
+                style={{ background: 'none', border: 'none', fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440', letterSpacing: '0.08em', cursor: 'pointer', textTransform: 'uppercase', padding: 0 }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#888880')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#444440')}
               >
@@ -222,17 +222,17 @@ export default function Processor({ results, onResults, documentType, onDocument
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid #1a1a18' }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: '#b8b6b0' }}>{r.filename}</div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#0d1f12', color: '#4a7c59', border: '1px solid #1a3020' }}>
+                    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#0d1f12', color: '#4a7c59', border: '1px solid #1a3020' }}>
                       {r.summary.extracted_count} / {r.summary.extracted_count + r.summary.missing_count} fields
                     </span>
-                    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#1a1608', color: '#c8a96e', border: '1px solid #3a3020' }}>
+                    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#1a1608', color: '#c8a96e', border: '1px solid #3a3020' }}>
                       {typeof r.summary.confidence === 'object' ? (r.summary.confidence as { value?: string })?.value : r.summary.confidence}
                     </span>
                   </div>
                 </div>
                 <div style={{ padding: '14px 16px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {r.summary.extracted_fields.map(f => (
-                    <span key={f} style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#444440', letterSpacing: '0.05em', padding: '3px 8px', background: '#0d0d0b', border: '1px solid #1a1a18', borderRadius: 2 }}>
+                    <span key={f} style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.05em', padding: '3px 8px', background: '#0d0d0b', border: '1px solid #1a1a18', borderRadius: 2 }}>
                       {f}
                     </span>
                   ))}
