@@ -5,13 +5,18 @@ NUMERIC CONVENTIONS
 - Revenue: extract in millions, in the currency stated in report_currency
 - Growth rates: extract as decimal (0.05 = +5%, -0.03 = -3%)
 - Margins: extract as decimal (0.42 = 42%)
-- If an exact figure is not stated but can be calculated from stated percentages and a known base,
-  calculate it and set confidence to "medium". Always prefer calculated over null.
+- If a monetary value is not stated but can be derived from a stated total and a stated percentage
+  breakdown, calculate it (e.g. segment_revenue = total_revenue × stated_pct) and set confidence
+  to "medium". Always prefer a calculated value over null.
 
-ORGANIC GROWTH
-- Only populate *_organic_growth_pct if the company explicitly states it — do not derive it yourself.
-- Common labels: "organic growth", "like-for-like growth", "constant-currency growth", "LFL".
-- If organic growth is stated only for the full company (not per segment), leave segment-level organic null.
+PROXY AND FALLBACK VALUES
+- Always prefer a populated value over null. If exact data for a field is unavailable, use the
+  best available proxy and document it clearly in extraction_notes.
+- tools_segment_*: if the exact division is not separately disclosed (e.g. it is nested inside a
+  larger reporting segment), use the parent segment as a proxy. Set tools_segment_name to
+  "<ParentSegmentName> (proxy for <ActualDivisionName>)" and explain the proxy in extraction_notes.
+- Exception — *_organic_growth_pct: NEVER calculate or infer. Only populate if the company
+  explicitly labels it as organic, like-for-like, constant-currency, or LFL growth.
 
 FX IMPACT
 - fx_impact_pct: look for "foreign exchange headwind/tailwind of X%" or "currency impact of X bps".
@@ -20,14 +25,15 @@ FX IMPACT
 TOOLS SEGMENT MAPPING
 - Map the segment most comparable to Example Corp's business (professional power tools, anchors, fastening,
   measuring systems) to tools_segment_*.
-  Common mappings:
-    Stanley Black & Decker → "Tools & Outdoor" (or its successor segment post-restructuring)
+  Reference mappings (use as a guide, not as fixed rules — company structures change over time):
+    Stanley Black & Decker → "Tools & Outdoor" (or successor segment post-restructuring)
     TTI / Milwaukee → "Power Equipment" or full company (TTI is tools-only)
-    Makita → full company revenue (Makita is tools-only)
-    Bosch → "Power Tools" division
+    Makita → full company (tools-only company)
+    Bosch → "Power Tools" division (nested under Consumer Goods sector)
     ITW → "Construction Products" segment
     Atlas Copco → "Power Technique" or "Tools & Assembly Solutions"
-- Record the exact name in tools_segment_name.
+- If the exact division is not separately reported, apply the proxy rule above.
+- Record the exact name (or proxy name) in tools_segment_name.
 
 PROFESSIONAL vs. DIY
 - professional_revenue: only populate if the company separately discloses professional-end revenue.
