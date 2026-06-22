@@ -172,7 +172,7 @@ def _evidenced_types_used(fields: list[FieldDef]) -> set[str]:
 
 
 def _generate_schema_code(req: SchemaCreateRequest) -> str:
-    lines = ["from pydantic import BaseModel, Field", "from typing import Optional", ""]
+    lines = ["from pydantic import BaseModel, Field, model_validator", "from typing import Optional", ""]
 
     ev_types = _evidenced_types_used(req.fields)
     if "EvidencedValue" in ev_types:
@@ -181,6 +181,13 @@ def _generate_schema_code(req: SchemaCreateRequest) -> str:
             "class EvidencedValue(BaseModel):",
             '    value: Optional[float] = Field(None, description="Extracted numeric value")',
             '    evidence: Optional[str] = Field(None, description="Exact quote and location from the document")',
+            "",
+            '    @model_validator(mode="before")',
+            "    @classmethod",
+            "    def coerce_scalar(cls, v):",
+            "        if isinstance(v, (int, float)):",
+            '            return {"value": float(v), "evidence": None}',
+            "        return v",
         ]
     if "EvidencedStr" in ev_types:
         lines += [
@@ -188,6 +195,13 @@ def _generate_schema_code(req: SchemaCreateRequest) -> str:
             "class EvidencedStr(BaseModel):",
             '    value: Optional[str] = Field(None, description="Extracted text value")',
             '    evidence: Optional[str] = Field(None, description="Exact quote and location from the document")',
+            "",
+            '    @model_validator(mode="before")',
+            "    @classmethod",
+            "    def coerce_scalar(cls, v):",
+            "        if isinstance(v, str):",
+            '            return {"value": v, "evidence": None}',
+            "        return v",
         ]
 
     for field in req.fields:
