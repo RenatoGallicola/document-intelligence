@@ -15,12 +15,50 @@ PROXY AND FALLBACK VALUES
 - tools_segment_*: if the exact division is not separately disclosed (e.g. it is nested inside a
   larger reporting segment), use the parent segment as a proxy. Set tools_segment_name to
   "<ParentSegmentName> (proxy for <ActualDivisionName>)" and explain the proxy in extraction_notes.
-- Exception — *_organic_growth_pct: NEVER calculate or infer. Only populate if the company
-  explicitly labels it as organic, like-for-like, constant-currency, or LFL growth.
+- Exception — *_organic_growth_pct: NEVER calculate or infer. Only populate if explicitly stated.
+  See ORGANIC GROWTH section below for full search guidance.
+
+ORGANIC GROWTH — SEARCH GUIDANCE
+Organic growth is the single most important field. Scan the ENTIRE document before leaving it null.
+
+Where to look (check all of these):
+1. Financial Highlights table or KPI scorecard (typically first 5-15 pages)
+2. CEO / Chairman / Management Board letter — often quotes organic growth in narrative
+3. Revenue bridge or waterfall table/chart — shows Reported | FX effect | M&A/Portfolio effect | Organic
+   The "organic" bar or row in a revenue bridge IS the organic growth — extract it directly.
+4. MD&A / Group Management Report, section on revenue or sales performance
+5. Segment-level discussion — organic may appear per segment even if total is not separately stated
+6. Footnotes or supplemental tables at the back of the annual report
+
+Accepted labels — ANY of the following qualifies as organic growth:
+  "organic growth", "organic revenue growth", "organic sales growth",
+  "like-for-like growth", "LFL growth", "comparable growth", "comparable-store growth",
+  "constant-currency growth", "at constant exchange rates", "at constant currencies",
+  "in local currencies", "local currency growth", "local currency terms",
+  "autonomous growth", "underlying growth", "underlying revenue growth",
+  "revenue development excluding exchange rate effects",
+  "revenue development excluding exchange rate effects and portfolio changes",
+  "growth excluding FX and M&A", "growth excluding currency and portfolio effects",
+  "adjusted for acquisitions and currency", "organic volume + price combined"
+
+Do NOT leave null if any of the above labels appears anywhere in the document.
+
+PROXY AND FALLBACK VALUES — OPERATING MARGIN
+- operating_margin_pct: prefer GAAP EBIT / revenue (also labeled "operating income margin",
+  "EBIT margin", "return on sales", "earnings from operations as % of revenue").
+- If GAAP operating income is heavily distorted by non-recurring items (impairment charges,
+  goodwill write-offs, restructuring charges making GAAP margin clearly unrepresentative),
+  use the adjusted/normalized version as fallback.
+  Accepted adjusted labels: "adjusted EBIT margin", "adjusted operating margin",
+  "EBITA margin", "underlying operating margin", "normalized operating margin".
+  Always note in evidence which measure was used (e.g. "adjusted EBIT margin").
+- Do NOT leave null if any operating margin figure exists — use the closest available and
+  explain in extraction_notes.
 
 FX IMPACT
 - fx_impact_pct: look for "foreign exchange headwind/tailwind of X%" or "currency impact of X bps".
   Convert basis points to decimal (300bps = 0.03). Negative means headwind (drag on growth).
+  Also check revenue bridge tables: the "FX" or "currency" row/bar is the fx_impact.
 
 M&A IMPACT
 - m_and_a_impact_pct: look for "acquisition contribution of X%", "M&A impact of X pp",
