@@ -14,6 +14,7 @@ DOCUMENT_TYPES = {
         "schema": CompetitorReportSchema,
         "prompt": build_prompt(CompetitorReportSchema, COMPETITOR_REPORT_INSTRUCTIONS),
         "model": "gemini-3.5-flash",
+        # "model": "gemini-3-flash-preview",
         "storage_table": "competitor_signals",
     },
 }

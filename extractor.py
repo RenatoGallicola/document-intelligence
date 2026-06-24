@@ -20,7 +20,7 @@ def load_pdf(pdf_path: str) -> bytes:
         return f.read()
 
 @retry(
-    retry=retry_if_exception_type(ClientError),
+    retry=retry_if_exception_type((ClientError, ValueError)),
     wait=wait_exponential(multiplier=1, min=2, max=60),
     stop=stop_after_attempt(4)
 )
@@ -35,15 +35,46 @@ def call_gemini(pdf_bytes: bytes, prompt: str, model_name: str) -> str:
             types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
             prompt
         ],
-        config={"temperature": 0}
+        config={"temperature": 0, "max_output_tokens": 16000}
     )
+    if response.text is None:
+        raise ValueError("Gemini returned no text content (likely a transient function_call response — retrying)")
     return response.text
+
+
+def _repair_truncated_json(text: str) -> dict:
+    """
+    Close all unclosed strings and brackets in a truncated JSON string.
+    Handles the common case where Gemini cuts off mid-string.
+    """
+    t = text.strip().rstrip(',')
+    stack = []
+    in_string = False
+    i = 0
+    while i < len(t):
+        c = t[i]
+        if c == '\\' and in_string:
+            i += 2
+            continue
+        if c == '"':
+            in_string = not in_string
+        elif not in_string:
+            if c in '{[':
+                stack.append('}' if c == '{' else ']')
+            elif c in '}]' and stack:
+                stack.pop()
+        i += 1
+    if in_string:
+        t += '"'
+    t += ''.join(reversed(stack))
+    return json.loads(t)
 
 
 def parse_response(raw_text: str, document_type: str) -> dict:
     """
     Parse the raw JSON string returned by Gemini.
     Strips markdown backticks if present, then parses to dict.
+    Falls back to truncation repair if the response was cut off.
     """
     cleaned = raw_text.strip()
     if cleaned.startswith("```"):
@@ -54,8 +85,11 @@ def parse_response(raw_text: str, document_type: str) -> dict:
 
     try:
         return json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to parse Gemini response as JSON: {e}\nRaw response:\n{raw_text}")
+    except json.JSONDecodeError:
+        try:
+            return _repair_truncated_json(cleaned)
+        except (json.JSONDecodeError, Exception) as e:
+            raise ValueError(f"Failed to parse Gemini response as JSON: {e}\nRaw response:\n{raw_text}")
 
 
 def validate_extraction(data: dict, document_type: str):
