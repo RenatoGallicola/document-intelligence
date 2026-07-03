@@ -214,10 +214,16 @@ def _generate_schema_code(req: SchemaCreateRequest) -> str:
                 lines.append(f"    {_field_line(nf.name, nf.type, nf.description)}")
 
     lines += ["", f"class {req.class_name}(BaseModel):"]
-    if not req.fields:
-        lines.append("    pass")
     for field in req.fields:
         lines.append(f"    {_field_line(field.name, field.type, field.description, field.is_list)}")
+
+    # every schema implicitly supports these — the base extraction prompt (core/prompt_builder.py)
+    # always asks the model for them, regardless of document type
+    existing_names = {f.name for f in req.fields}
+    if "confidence" not in existing_names:
+        lines.append(f"    {_field_line('confidence', 'str', 'Extraction confidence: high, medium, or low')}")
+    if "extraction_notes" not in existing_names:
+        lines.append(f"    {_field_line('extraction_notes', 'str', 'Ambiguities, caveats, or important context for this extraction')}")
 
     return "\n".join(lines) + "\n"
 

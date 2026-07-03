@@ -138,10 +138,18 @@ function generatePreview(displayName: string, fields: FormField[]): string {
   })
 
   lines.push('', `class ${className}(BaseModel):`)
-  if (!fields.length) { lines.push('    pass') }
   fields.forEach(f => {
     lines.push(previewFieldLine(f.name || 'field', f.type, f.description, f.is_list))
   })
+
+  // every schema implicitly supports these — mirrors backend/routers/schemas.py
+  const existingNames = new Set(fields.map(f => f.name))
+  if (!existingNames.has('confidence')) {
+    lines.push(previewFieldLine('confidence', 'str', 'Extraction confidence: high, medium, or low', true))
+  }
+  if (!existingNames.has('extraction_notes')) {
+    lines.push(previewFieldLine('extraction_notes', 'str', 'Ambiguities, caveats, or important context for this extraction', true))
+  }
 
   return lines.join('\n')
 }
@@ -618,8 +626,11 @@ export default function SchemaManager() {
 
               {/* Fields */}
               <div style={{ marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <div style={sectionLabel}>Fields — {formFields.length}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={{ ...sectionLabel, marginBottom: 0 }}>Fields — {formFields.length}</div>
+                </div>
+                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#333330', marginBottom: 10 }}>
+                  + confidence, extraction_notes — added automatically to every schema
                 </div>
 
                 {/* column headers */}
