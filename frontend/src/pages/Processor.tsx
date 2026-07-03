@@ -52,6 +52,7 @@ export default function Processor({ results, onResults, documentType, onDocument
   const [dragging, setDragging] = useState(false)
   const [hovering, setHovering] = useState(false)
   const [docTypes, setDocTypes] = useState<Array<{ id: string; label: string }>>([])
+  const [schemasLoaded, setSchemasLoaded] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -63,9 +64,13 @@ export default function Processor({ results, onResults, documentType, onDocument
       setDocTypes(types)
       if (types.length > 0 && !types.find(t => t.id === documentType)) {
         onDocumentType(types[0].id)
+      } else if (types.length === 0) {
+        onDocumentType('')
       }
+      setSchemasLoaded(true)
     }).catch(() => {
       setDocTypes([{ id: 'competitor_report', label: 'Competitor Report' }])
+      setSchemasLoaded(true)
     })
   }, [])
 
@@ -110,6 +115,9 @@ export default function Processor({ results, onResults, documentType, onDocument
 
   const formatBytes = (b: number) => b < 1e6 ? `${(b / 1e3).toFixed(0)} kb` : `${(b / 1e6).toFixed(1)} mb`
 
+  const noSchemas = schemasLoaded && docTypes.length === 0
+  const dropDisabled = loading || noSchemas
+
   return (
     <>
       <div style={topbarStyle}>
@@ -130,25 +138,31 @@ export default function Processor({ results, onResults, documentType, onDocument
 
         <div style={sectionLabel as React.CSSProperties}>Upload documents</div>
 
+        {noSchemas && (
+          <div style={{ background: '#1a1608', border: '1px solid #3a3020', borderRadius: 3, padding: '10px 14px', marginBottom: 12, fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#c8a96e' }}>
+            No document schemas configured yet. Create one in Schema Manager before extracting.
+          </div>
+        )}
+
         {/* drop zone */}
         <div
-          onClick={() => { if (!loading) inputRef.current?.click() }}
-          onDragOver={e => { if (!loading) { e.preventDefault(); setDragging(true) } }}
+          onClick={() => { if (!dropDisabled) inputRef.current?.click() }}
+          onDragOver={e => { if (!dropDisabled) { e.preventDefault(); setDragging(true) } }}
           onDragLeave={() => setDragging(false)}
-          onDrop={e => { e.preventDefault(); setDragging(false); if (!loading) addFiles(e.dataTransfer.files) }}
-          onMouseEnter={() => { if (!loading) setHovering(true) }}
+          onDrop={e => { e.preventDefault(); setDragging(false); if (!dropDisabled) addFiles(e.dataTransfer.files) }}
+          onMouseEnter={() => { if (!dropDisabled) setHovering(true) }}
           onMouseLeave={() => setHovering(false)}
           style={{
             border: `1px dashed ${dragging || hovering ? '#555550' : '#2a2a26'}`,
             borderRadius: 4,
             padding: '40px 28px',
             textAlign: 'center',
-            cursor: loading ? 'not-allowed' : 'pointer',
+            cursor: dropDisabled ? 'not-allowed' : 'pointer',
             background: dragging || hovering ? '#111110' : 'transparent',
             transition: 'all 0.2s',
             marginBottom: 12,
-            pointerEvents: loading ? 'none' : 'auto',
-            opacity: loading ? 0.4 : 1,
+            pointerEvents: dropDisabled ? 'none' : 'auto',
+            opacity: dropDisabled ? 0.4 : 1,
           }}
         >
           <input
@@ -156,9 +170,9 @@ export default function Processor({ results, onResults, documentType, onDocument
             type="file"
             accept=".pdf"
             multiple
-            disabled={loading}
+            disabled={dropDisabled}
             style={{ display: 'none' }}
-            onChange={e => { if (!loading) addFiles(e.target.files) }}
+            onChange={e => { if (!dropDisabled) addFiles(e.target.files) }}
           />
           <div style={{ width: 32, height: 32, border: '1px solid #2a2a26', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#444440' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -189,22 +203,25 @@ export default function Processor({ results, onResults, documentType, onDocument
             <select
               value={documentType}
               onChange={e => onDocumentType(e.target.value)}
-              style={{ width: '100%', background: '#111110', border: '1px solid #1e1e1c', borderRadius: 3, color: '#b8b6b0', fontFamily: 'DM Sans, sans-serif', fontSize: 12, padding: '8px 12px', outline: 'none' }}
+              disabled={noSchemas}
+              style={{ width: '100%', background: '#111110', border: '1px solid #1e1e1c', borderRadius: 3, color: noSchemas ? '#444440' : '#b8b6b0', fontFamily: 'DM Sans, sans-serif', fontSize: 12, padding: '8px 12px', outline: 'none' }}
             >
-              {docTypes.map(t => (
-                <option key={t.id} value={t.id}>{t.label}</option>
-              ))}
+              {noSchemas
+                ? <option value="">No schemas available</option>
+                : docTypes.map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
             </select>
           </div>
           <button
             onClick={handleExtract}
-            disabled={loading || !files.length}
+            disabled={loading || !files.length || noSchemas}
             style={{
-              background: loading || !files.length ? '#1a1a18' : '#c8a96e',
-              color: loading || !files.length ? '#444440' : '#0a0a0a',
+              background: loading || !files.length || noSchemas ? '#1a1a18' : '#c8a96e',
+              color: loading || !files.length || noSchemas ? '#444440' : '#0a0a0a',
               border: 'none', borderRadius: 3, padding: '8px 24px',
               fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 500,
-              cursor: loading || !files.length ? 'not-allowed' : 'pointer',
+              cursor: loading || !files.length || noSchemas ? 'not-allowed' : 'pointer',
               transition: 'all 0.15s', whiteSpace: 'nowrap',
             }}
           >
