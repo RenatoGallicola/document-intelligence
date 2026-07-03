@@ -5,6 +5,7 @@ import Processor from './pages/Processor'
 import OutputExplorer from './pages/OutputExplorer'
 import SchemaManager from './pages/SchemaManager'
 import Settings from './pages/Settings'
+import { useTheme } from './theme/useTheme'
 
 export type Page = 'processor' | 'explorer' | 'schemas' | 'settings'
 
@@ -22,6 +23,7 @@ export interface ProcessResult {
 }
 
 export default function App() {
+  const { theme } = useTheme()
   const [currentPage, setCurrentPage] = useState<Page>('processor')
   const [documentType, setDocumentType] = useState('competitor_report')
   const [files, setFiles] = useState<File[]>([])
@@ -63,9 +65,9 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#0a0a0a' }}>
+    <div style={{ display: 'flex', height: '100vh', background: theme.colors.bg.base }}>
       <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} model={model} />
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0d0d0b' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme.colors.bg.surface }}>
         {renderPage()}
       </main>
     </div>
