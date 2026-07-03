@@ -59,12 +59,17 @@ const statusBadge = (ok: boolean): React.CSSProperties => ({
   border: `1px solid ${ok ? '#1a3020' : '#3a1a1a'}`,
 })
 
-export default function Settings() {
+interface Props {
+  model: string
+  onModel: (model: string) => void
+}
+
+export default function Settings({ model, onModel }: Props) {
   const [apiKeyPreview, setApiKeyPreview] = useState('loading...')
   const [apiKeySet, setApiKeySet] = useState(false)
   const [newApiKey, setNewApiKey] = useState('')
   const [models, setModels] = useState<string[]>([])
-  const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash')
+  const [selectedModel, setSelectedModel] = useState(model)
   const [modelsLoading, setModelsLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -112,6 +117,7 @@ export default function Settings() {
   const saveModel = async () => {
     try {
       await axios.post('/api/settings/model', { model: selectedModel })
+      onModel(selectedModel)
       setModelSaved(true)
       setTimeout(() => setModelSaved(false), 2000)
     } catch {

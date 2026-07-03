@@ -34,6 +34,7 @@ def update_api_key(body: APIKeyUpdate):
 @router.post("/model")
 def update_model(body: dict):
     set_key(str(ENV_PATH), "DEFAULT_MODEL", body["model"])
+    os.environ["DEFAULT_MODEL"] = body["model"]
     return {"success": True}
 
 

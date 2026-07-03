@@ -3,6 +3,7 @@ import type { Page } from '../App'
 interface Props {
   currentPage: Page
   onNavigate: (page: Page) => void
+  model: string
 }
 
 const navItems: { id: Page; label: string; section: string }[] = [
@@ -12,7 +13,7 @@ const navItems: { id: Page; label: string; section: string }[] = [
   { id: 'settings', label: 'Settings', section: 'Configure' },
 ]
 
-export default function Sidebar({ currentPage, onNavigate }: Props) {
+export default function Sidebar({ currentPage, onNavigate, model }: Props) {
   const sections = [...new Set(navItems.map(i => i.section))]
 
   return (
@@ -91,7 +92,7 @@ export default function Sidebar({ currentPage, onNavigate }: Props) {
       <div style={{ padding: '16px 20px', borderTop: '1px solid #1e1e1c' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.05em' }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#4a7c59', flexShrink: 0 }} />
-          gemini-3.5-flash — connected
+          {model} — connected
         </div>
       </div>
     </aside>

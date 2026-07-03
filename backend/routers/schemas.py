@@ -272,7 +272,6 @@ def _update_config(req: SchemaCreateRequest) -> None:
             f'    "{name}": {{\n'
             f'        "schema": {class_name},\n'
             f'        "prompt": build_prompt({class_name}, {instructions_var}),\n'
-            f'        "model": "gemini-3.5-flash",\n'
             f'        "storage_table": "{name}",\n'
             f'    }},\n'
         )
