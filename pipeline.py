@@ -1,8 +1,11 @@
+import logging
 import os
 from pathlib import Path
 from extractor import extract_from_document
 from validator import summarize_extraction, validate_extraction
 from storage import save_to_json
+
+logger = logging.getLogger(__name__)
 
 
 def process_document(pdf_path: str, document_type: str, output_dir: str = "output") -> dict:
@@ -18,16 +21,16 @@ def process_document(pdf_path: str, document_type: str, output_dir: str = "outpu
     Returns:
         dict with keys: validated, summary, output_path, errors
     """
-    print(f"\n{'='*60}")
-    print(f"Processing: {Path(pdf_path).name}")
-    print(f"Document type: {document_type}")
-    print(f"{'='*60}")
+    logger.info("=" * 60)
+    logger.info("Processing: %s", Path(pdf_path).name)
+    logger.info("Document type: %s", document_type)
+    logger.info("=" * 60)
 
     # step 1 — extract
     try:
         validated = extract_from_document(pdf_path, document_type)
     except Exception as e:
-        print(f"Extraction failed: {e}")
+        logger.info("Extraction failed: %s", e)
         return {
             "validated": None,
             "summary": None,
@@ -39,12 +42,12 @@ def process_document(pdf_path: str, document_type: str, output_dir: str = "outpu
     _, errors = validate_extraction(validated.model_dump(), document_type)
     summary = summarize_extraction(validated)
 
-    print(f"\nExtraction summary:")
-    print(f"  Extracted fields : {summary['extracted_count']}")
-    print(f"  Missing fields   : {summary['missing_count']}")
-    print(f"  Confidence       : {summary['confidence']}")
+    logger.info("Extraction summary:")
+    logger.info("  Extracted fields : %s", summary['extracted_count'])
+    logger.info("  Missing fields   : %s", summary['missing_count'])
+    logger.info("  Confidence       : %s", summary['confidence'])
     if summary["missing_fields"]:
-        print(f"  Missing          : {', '.join(summary['missing_fields'])}")
+        logger.info("  Missing          : %s", ', '.join(summary['missing_fields']))
 
     # step 3 — save
     result_data = validated.model_dump()
@@ -75,10 +78,10 @@ def process_batch(pdf_dir: str, document_type: str, output_dir: str = "output") 
     pdf_files = list(Path(pdf_dir).glob("*.pdf"))
 
     if not pdf_files:
-        print(f"No PDF files found in: {pdf_dir}")
+        logger.info("No PDF files found in: %s", pdf_dir)
         return []
 
-    print(f"Found {len(pdf_files)} PDF files in {pdf_dir}")
+    logger.info("Found %d PDF files in %s", len(pdf_files), pdf_dir)
     results = []
 
     for pdf_path in pdf_files:
@@ -88,19 +91,21 @@ def process_batch(pdf_dir: str, document_type: str, output_dir: str = "output") 
             **result
         })
 
-    # print final summary
+    # log final summary
     successful = sum(1 for r in results if r["errors"] is None)
     failed = len(results) - successful
 
-    print(f"\n{'='*60}")
-    print(f"Batch complete: {successful} succeeded, {failed} failed")
-    print(f"{'='*60}")
+    logger.info("=" * 60)
+    logger.info("Batch complete: %d succeeded, %d failed", successful, failed)
+    logger.info("=" * 60)
 
     return results
 
 
 if __name__ == "__main__":
     import argparse
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     parser = argparse.ArgumentParser(description="Competitor report extraction pipeline")
     parser.add_argument(

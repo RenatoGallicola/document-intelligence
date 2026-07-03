@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 import time
 from google import genai
 from google.genai import types
@@ -12,6 +13,7 @@ from google.genai.errors import ClientError
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+logger = logging.getLogger(__name__)
 
 
 def load_pdf(pdf_path: str) -> bytes:
@@ -125,17 +127,17 @@ def extract_from_document(pdf_path: str, document_type: str):
     if prompt is None:
         raise NotImplementedError(f"Prompt not yet defined for document type: {document_type}")
 
-    print(f"Loading PDF: {pdf_path}")
+    logger.info("Loading PDF: %s", pdf_path)
     pdf_bytes = load_pdf(pdf_path)
 
-    print(f"Calling Gemini ({model_name})...")
+    logger.info("Calling Gemini (%s)...", model_name)
     raw_response = call_gemini(pdf_bytes, prompt, model_name)
 
-    print("Parsing response...")
+    logger.info("Parsing response...")
     parsed = parse_response(raw_response, document_type)
 
-    print("Validating against schema...")
+    logger.info("Validating against schema...")
     validated = validate_extraction(parsed, document_type)
 
-    print("Extraction complete.")
+    logger.info("Extraction complete.")
     return validated
