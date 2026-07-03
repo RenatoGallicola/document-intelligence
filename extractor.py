@@ -5,8 +5,8 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from config import DOCUMENT_TYPES
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from google.genai.errors import ClientError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
+from google.genai.errors import ClientError, ServerError
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -18,15 +18,33 @@ def load_pdf(pdf_path: str) -> bytes:
     with open(pdf_path, "rb") as f:
         return f.read()
 
+
+def _is_retryable(exception: BaseException) -> bool:
+    """
+    Only retry errors that can plausibly succeed on a second attempt.
+    A missing/invalid API key (401/403) or a malformed request (400) will
+    fail identically every time, so retrying it just wastes ~30s before
+    surfacing the same error the user could have seen immediately.
+    """
+    if isinstance(exception, ValueError):
+        return True
+    if isinstance(exception, ServerError):
+        return True
+    if isinstance(exception, ClientError):
+        return exception.code == 429
+    return False
+
+
 @retry(
-    retry=retry_if_exception_type((ClientError, ValueError)),
+    retry=retry_if_exception(_is_retryable),
     wait=wait_exponential(multiplier=1, min=2, max=60),
     stop=stop_after_attempt(4)
 )
 def call_gemini(pdf_bytes: bytes, prompt: str, model_name: str) -> str:
     """
     Send a PDF and a prompt to Gemini and return the raw text response.
-    Retries up to 4 times with exponential backoff on ClientError (429, 503).
+    Retries on rate limiting (429) and server errors (5xx); fails immediately
+    on permanent client errors like an invalid or missing API key.
     """
     response = client.models.generate_content(
         model=model_name,
