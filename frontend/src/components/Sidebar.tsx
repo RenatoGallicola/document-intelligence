@@ -113,11 +113,11 @@ export default function Sidebar({ currentPage, onNavigate, model, apiKeySet }: P
         borderBottom: `1px solid ${colors.border.default}`,
       }}>
         {!collapsed && (
-          <div>
+          <div style={{ minWidth: 0, overflow: 'hidden' }}>
             <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, fontWeight: fontWeight.light, color: colors.text.midGray, letterSpacing: letterSpacing.wide6, textTransform: 'uppercase', marginBottom: 4 }}>
               v0.1.0
             </div>
-            <div style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text.primary, letterSpacing: letterSpacing.tight }}>
+            <div style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text.primary, letterSpacing: letterSpacing.tight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Document Intelligence
             </div>
           </div>
@@ -130,6 +130,7 @@ export default function Sidebar({ currentPage, onNavigate, model, apiKeySet }: P
             border: `1px solid ${colors.border.default}`,
             borderRadius: radius.sm,
             width: 22, height: 22,
+            marginLeft: collapsed ? 0 : 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: colors.text.readable,
             cursor: 'pointer',
