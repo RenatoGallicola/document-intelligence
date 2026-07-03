@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useTheme } from '../theme/useTheme'
+import { font, fontSize, fontWeight, letterSpacing, radius, transitions } from '../theme/tokens'
+import { topbarStyle, sectionLabel, fieldLabel, inputStyle, selectStyle, statusBadge, buttonPrimary, cardStyle, modalOverlayStyle, modalCardStyle } from '../theme/styles'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -158,33 +161,6 @@ function generatePreview(displayName: string, fields: FormField[]): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const sectionLabel: React.CSSProperties = {
-  fontFamily: 'DM Mono, monospace',
-  fontSize: 10,
-  color: '#444440',
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
-  marginBottom: 10,
-}
-
-const inputStyle: React.CSSProperties = {
-  background: '#0d0d0b',
-  border: '1px solid #1e1e1c',
-  borderRadius: 3,
-  color: '#b8b6b0',
-  fontFamily: 'DM Mono, monospace',
-  fontSize: 12,
-  padding: '7px 10px',
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-}
-
-const selectStyle: React.CSSProperties = {
-  ...inputStyle,
-  cursor: 'pointer',
-}
-
 function FieldRow({
   field,
   onChange,
@@ -194,6 +170,8 @@ function FieldRow({
   onChange: (updated: FormField) => void
   onRemove: () => void
 }) {
+  const { theme } = useTheme()
+  const { colors } = theme
   const [open, setOpen] = useState(false)
   const [hover, setHover] = useState(false)
 
@@ -215,13 +193,13 @@ function FieldRow({
 
   return (
     <div
-      style={{ border: '1px solid #1a1a18', borderRadius: 3, marginBottom: 6, overflow: 'hidden' }}
+      style={{ border: `1px solid ${colors.border.default}`, borderRadius: radius.md, marginBottom: 6, overflow: 'hidden' }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div style={{ display: 'flex', gap: 6, padding: '8px 10px', background: '#0d0d0b', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 6, padding: '8px 10px', background: colors.bg.surface, alignItems: 'center' }}>
         {/* drag handle visual */}
-        <div style={{ color: '#333330', cursor: 'default', userSelect: 'none', fontSize: 12, lineHeight: 1, paddingTop: 1 }}>⠿</div>
+        <div style={{ color: colors.text.quaternary, cursor: 'default', userSelect: 'none', fontSize: fontSize.base, lineHeight: 1, paddingTop: 1 }}>⠿</div>
 
         {/* field name */}
         <input
@@ -229,14 +207,14 @@ function FieldRow({
           value={field.name}
           onChange={e => update({ name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
           onBlur={e => update({ name: e.target.value.replace(/^_+|_+$/g, '') })}
-          style={{ ...inputStyle, flex: 1.4, minWidth: 0 }}
+          style={{ ...inputStyle(theme), flex: 1.4, minWidth: 0 }}
         />
 
         {/* type */}
         <select
           value={field.type}
           onChange={e => update({ type: e.target.value as FieldType, fields: [] })}
-          style={{ ...selectStyle, flex: 1, minWidth: 0 }}
+          style={{ ...selectStyle(theme), flex: 1, minWidth: 0 }}
         >
           {FIELD_TYPES.map(t => (
             <option key={t} value={t}>{TYPE_LABELS[t]}</option>
@@ -248,14 +226,14 @@ function FieldRow({
           placeholder="Description for extraction prompt"
           value={field.description}
           onChange={e => update({ description: e.target.value })}
-          style={{ ...inputStyle, flex: 2, minWidth: 0 }}
+          style={{ ...inputStyle(theme), flex: 2, minWidth: 0 }}
         />
 
         {/* nested toggle / list toggle */}
         {field.type === 'nested' && (
           <button
             onClick={() => setOpen(v => !v)}
-            style={{ background: open ? '#161614' : 'none', border: '1px solid #1a1a18', borderRadius: 2, padding: '4px 8px', cursor: 'pointer', color: '#888880', fontFamily: 'DM Mono, monospace', fontSize: 10, whiteSpace: 'nowrap', flexShrink: 0 }}
+            style={{ background: open ? colors.bg.active : 'none', border: `1px solid ${colors.border.default}`, borderRadius: radius.sm, padding: '4px 8px', cursor: 'pointer', color: colors.text.readable, fontFamily: font.mono, fontSize: fontSize.xs, whiteSpace: 'nowrap', flexShrink: 0 }}
           >
             {field.fields.length} fields {open ? '▲' : '▼'}
           </button>
@@ -264,7 +242,7 @@ function FieldRow({
         {/* remove */}
         <button
           onClick={onRemove}
-          style={{ background: 'none', border: 'none', color: hover ? '#666660' : '#333330', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0, transition: 'color 0.15s' }}
+          style={{ background: 'none', border: 'none', color: hover ? colors.text.inactive : colors.text.quaternary, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0, transition: transitions.colorFast }}
         >
           ×
         </button>
@@ -272,8 +250,8 @@ function FieldRow({
 
       {/* nested sub-fields */}
       {field.type === 'nested' && open && (
-        <div style={{ padding: '8px 10px 10px 32px', background: '#111110', borderTop: '1px solid #1a1a18' }}>
-          <div style={{ ...sectionLabel, marginBottom: 8 }}>Sub-fields of {toPascalCase(field.name || 'Item')}</div>
+        <div style={{ padding: '8px 10px 10px 32px', background: colors.bg.raised, borderTop: `1px solid ${colors.border.default}` }}>
+          <div style={{ ...sectionLabel(theme), marginBottom: 8 }}>Sub-fields of {toPascalCase(field.name || 'Item')}</div>
           {field.fields.map((nf, idx) => (
             <div key={nf.id} style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'center' }}>
               <input
@@ -281,12 +259,12 @@ function FieldRow({
                 value={nf.name}
                 onChange={e => updateSubField(idx, { name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                 onBlur={e => updateSubField(idx, { name: e.target.value.replace(/^_+|_+$/g, '') })}
-                style={{ ...inputStyle, flex: 1 }}
+                style={{ ...inputStyle(theme), flex: 1 }}
               />
               <select
                 value={nf.type}
                 onChange={e => updateSubField(idx, { type: e.target.value as FieldType })}
-                style={{ ...selectStyle, flex: 1 }}
+                style={{ ...selectStyle(theme), flex: 1 }}
               >
                 {FIELD_TYPES.filter(t => t !== 'nested').map(t => (
                   <option key={t} value={t}>{TYPE_LABELS[t]}</option>
@@ -296,11 +274,11 @@ function FieldRow({
                 placeholder="Description"
                 value={nf.description}
                 onChange={e => updateSubField(idx, { description: e.target.value })}
-                style={{ ...inputStyle, flex: 2 }}
+                style={{ ...inputStyle(theme), flex: 2 }}
               />
               <button
                 onClick={() => removeSubField(idx)}
-                style={{ background: 'none', border: 'none', color: '#444440', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}
+                style={{ background: 'none', border: 'none', color: colors.text.secondary, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}
               >
                 ×
               </button>
@@ -308,9 +286,9 @@ function FieldRow({
           ))}
           <button
             onClick={addSubField}
-            style={{ background: 'none', border: '1px dashed #1a1a18', borderRadius: 2, padding: '5px 10px', color: '#444440', fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.08em', cursor: 'pointer', marginTop: 4 }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#888880'; (e.currentTarget as HTMLElement).style.borderColor = '#2a2a26' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#444440'; (e.currentTarget as HTMLElement).style.borderColor = '#1a1a18' }}
+            style={{ background: 'none', border: `1px dashed ${colors.border.default}`, borderRadius: radius.sm, padding: '5px 10px', color: colors.text.secondary, fontFamily: font.mono, fontSize: fontSize.xs, letterSpacing: letterSpacing.wide3, cursor: 'pointer', marginTop: 4 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.text.readable; (e.currentTarget as HTMLElement).style.borderColor = colors.border.hover }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.secondary; (e.currentTarget as HTMLElement).style.borderColor = colors.border.default }}
           >
             + Add sub-field
           </button>
@@ -325,6 +303,8 @@ function FieldRow({
 // ---------------------------------------------------------------------------
 
 export default function SchemaManager() {
+  const { theme } = useTheme()
+  const { colors } = theme
   const [schemas, setSchemas] = useState<SchemaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<Mode>('empty')
@@ -446,21 +426,13 @@ export default function SchemaManager() {
     setSaving(false)
   }
 
-  const topbarStyle: React.CSSProperties = {
-    height: 52,
-    borderBottom: '1px solid #1a1a18',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 28px',
-    flexShrink: 0,
-  }
+  const saveDisabled = saving || !derivedName
 
   return (
     <>
-      <div style={topbarStyle}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: '#e8e6e0' }}>Schema Manager</div>
-        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', letterSpacing: '0.05em' }}>
+      <div style={topbarStyle(theme)}>
+        <div style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text.primary }}>Schema Manager</div>
+        <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.muted, letterSpacing: letterSpacing.wide1 }}>
           {schemas.length} schema{schemas.length !== 1 ? 's' : ''}
         </div>
       </div>
@@ -470,12 +442,12 @@ export default function SchemaManager() {
         {/* ---------------------------------------------------------------- */}
         {/* Left panel — schema list                                          */}
         {/* ---------------------------------------------------------------- */}
-        <div style={{ width: 220, minWidth: 220, borderRight: '1px solid #1a1a18', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ width: 220, minWidth: 220, borderRight: `1px solid ${colors.border.default}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          <div style={{ padding: '10px 12px', borderBottom: '1px solid #1a1a18' }}>
+          <div style={{ padding: '10px 12px', borderBottom: `1px solid ${colors.border.default}` }}>
             <button
               onClick={startCreate}
-              style={{ width: '100%', background: '#c8a96e', color: '#0a0a0a', border: 'none', borderRadius: 3, padding: '7px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'opacity 0.15s' }}
+              style={{ width: '100%', background: colors.accent.default, color: colors.accent.contrastText, border: 'none', borderRadius: radius.md, padding: '7px 12px', fontFamily: font.sans, fontSize: fontSize.base, fontWeight: fontWeight.medium, cursor: 'pointer', transition: transitions.opacityBase }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
             >
@@ -485,10 +457,10 @@ export default function SchemaManager() {
 
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {loading && (
-              <div style={{ padding: '16px 16px', fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>Loading...</div>
+              <div style={{ padding: '16px 16px', fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary }}>Loading...</div>
             )}
             {!loading && schemas.length === 0 && (
-              <div style={{ padding: '16px 16px', fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>No schemas found.</div>
+              <div style={{ padding: '16px 16px', fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary }}>No schemas found.</div>
             )}
             {schemas.map(s => {
               const isActive = (mode === 'view' || mode === 'edit') && selected?.id === s.id
@@ -500,26 +472,26 @@ export default function SchemaManager() {
                       flex: 1,
                       display: 'block',
                       padding: '10px 16px',
-                      background: isActive ? '#161614' : 'transparent',
+                      background: isActive ? colors.bg.active : 'transparent',
                       border: 'none',
-                      borderLeft: `2px solid ${isActive ? '#c8a96e' : 'transparent'}`,
+                      borderLeft: `2px solid ${isActive ? colors.accent.default : 'transparent'}`,
                       cursor: 'pointer',
                       textAlign: 'left',
-                      transition: 'all 0.1s',
+                      transition: transitions.allBase,
                       minWidth: 0,
                     }}
-                    onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = '#0f0f0d' } }}
+                    onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = colors.bg.hover } }}
                     onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent' } }}
                   >
-                    <div style={{ fontSize: 12, color: isActive ? '#e8e6e0' : '#888880', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: fontSize.base, color: isActive ? colors.text.primary : colors.text.readable, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {toDisplayName(s.id)}
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#333330' }}>
+                      <span style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.quaternary }}>
                         {s.field_count}f
                       </span>
                       {s.is_managed && (
-                        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#4a7c59', letterSpacing: '0.06em' }}>managed</span>
+                        <span style={{ fontFamily: font.mono, fontSize: fontSize.xxs, color: colors.status.success.text, letterSpacing: letterSpacing.wide2 }}>managed</span>
                       )}
                     </div>
                   </button>
@@ -527,9 +499,9 @@ export default function SchemaManager() {
                     <button
                       onClick={e => { e.stopPropagation(); setDeleteTarget(s.id) }}
                       title="Delete schema"
-                      style={{ background: 'none', border: 'none', padding: '0 10px', cursor: 'pointer', color: '#333330', transition: 'color 0.15s', flexShrink: 0 }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#c85050' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#333330' }}
+                      style={{ background: 'none', border: 'none', padding: '0 10px', cursor: 'pointer', color: colors.text.quaternary, transition: transitions.colorFast, flexShrink: 0 }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.status.error.text }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.quaternary }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <path d="M3 6h18M8 6V4h8v2M6 6l1 16h10l1-16" />
@@ -551,14 +523,14 @@ export default function SchemaManager() {
           {mode === 'empty' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440', letterSpacing: '0.1em', marginBottom: 8 }}>
+                <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary, letterSpacing: letterSpacing.wide4, marginBottom: 8 }}>
                   SELECT A SCHEMA OR CREATE A NEW ONE
                 </div>
                 <button
                   onClick={startCreate}
-                  style={{ background: 'none', border: '1px solid #1a1a18', borderRadius: 3, padding: '7px 16px', color: '#666660', fontFamily: 'DM Mono, monospace', fontSize: 11, cursor: 'pointer', letterSpacing: '0.06em' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#b8b6b0'; (e.currentTarget as HTMLElement).style.borderColor = '#2a2a26' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#666660'; (e.currentTarget as HTMLElement).style.borderColor = '#1a1a18' }}
+                  style={{ background: 'none', border: `1px solid ${colors.border.default}`, borderRadius: radius.md, padding: '7px 16px', color: colors.text.inactive, fontFamily: font.mono, fontSize: fontSize.sm, cursor: 'pointer', letterSpacing: letterSpacing.wide2 }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.text.tertiary; (e.currentTarget as HTMLElement).style.borderColor = colors.border.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.inactive; (e.currentTarget as HTMLElement).style.borderColor = colors.border.default }}
                 >
                   + New schema
                 </button>
@@ -571,25 +543,25 @@ export default function SchemaManager() {
             <div style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 500, color: '#e8e6e0', marginBottom: 4 }}>{toDisplayName(selected.id)}</div>
-                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>{selected.class_name}</div>
+                  <div style={{ fontSize: fontSize.xl, fontWeight: fontWeight.medium, color: colors.text.primary, marginBottom: 4 }}>{toDisplayName(selected.id)}</div>
+                  <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary }}>{selected.class_name}</div>
                 </div>
-                <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, padding: '3px 8px', borderRadius: 2, background: '#0d0d0b', border: '1px solid #1a1a18', color: '#444440' }}>
+                <span style={{ fontFamily: font.mono, fontSize: fontSize.xs, padding: '3px 8px', borderRadius: radius.sm, background: colors.bg.surface, border: `1px solid ${colors.border.default}`, color: colors.text.secondary }}>
                   read-only
                 </span>
               </div>
 
-              <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', marginBottom: 20, padding: '10px 14px', background: '#0d0d0b', border: '1px solid #1a1a18', borderRadius: 3 }}>
-                This schema is defined in Python. Edit <code style={{ color: '#888880' }}>schemas/{selected.id}.py</code> directly.
+              <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.muted, marginBottom: 20, padding: '10px 14px', background: colors.bg.surface, border: `1px solid ${colors.border.default}`, borderRadius: radius.md }}>
+                This schema is defined in Python. Edit <code style={{ color: colors.text.readable }}>schemas/{selected.id}.py</code> directly.
               </div>
 
-              <div style={sectionLabel}>Fields — {selected.field_count}</div>
+              <div style={sectionLabel(theme)}>Fields — {selected.field_count}</div>
               {selected.fields.map(f => (
-                <div key={f.name} style={{ display: 'flex', gap: 12, padding: '8px 12px', background: '#0d0d0b', border: '1px solid #1a1a18', borderRadius: 3, marginBottom: 4 }}>
-                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#b8b6b0', minWidth: 160 }}>{f.name}</div>
-                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.type}</div>
+                <div key={f.name} style={{ display: 'flex', gap: 12, padding: '8px 12px', background: colors.bg.surface, border: `1px solid ${colors.border.default}`, borderRadius: radius.md, marginBottom: 4 }}>
+                  <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.tertiary, minWidth: 160 }}>{f.name}</div>
+                  <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.secondary, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.type}</div>
                   {f.description && (
-                    <div style={{ fontSize: 11, color: '#666660', flex: 2 }}>{f.description}</div>
+                    <div style={{ fontSize: fontSize.sm, color: colors.text.inactive, flex: 2 }}>{f.description}</div>
                   )}
                 </div>
               ))}
@@ -602,10 +574,10 @@ export default function SchemaManager() {
 
               {/* Schema name */}
               <div style={{ marginBottom: 24 }}>
-                <div style={sectionLabel}>{mode === 'create' ? 'New schema' : 'Edit schema'}</div>
+                <div style={sectionLabel(theme)}>{mode === 'create' ? 'New schema' : 'Edit schema'}</div>
 
-                <div style={{ background: '#111110', border: '1px solid #1a1a18', borderRadius: 4, padding: 16 }}>
-                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+                <div style={{ ...cardStyle(theme), padding: 16 }}>
+                  <div style={fieldLabel(theme)}>
                     Display name
                   </div>
                   <input
@@ -613,12 +585,12 @@ export default function SchemaManager() {
                     value={displayName}
                     onChange={e => setDisplayName(e.target.value)}
                     disabled={mode === 'edit'}
-                    style={{ ...inputStyle, marginBottom: 10, opacity: mode === 'edit' ? 0.5 : 1 }}
+                    style={{ ...inputStyle(theme), marginBottom: 10, opacity: mode === 'edit' ? 0.5 : 1 }}
                   />
                   {derivedName && (
-                    <div style={{ display: 'flex', gap: 16, fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36' }}>
-                      <span>id: <span style={{ color: '#888880' }}>{derivedName}</span></span>
-                      <span>class: <span style={{ color: '#888880' }}>{derivedClass}</span></span>
+                    <div style={{ display: 'flex', gap: 16, fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.muted }}>
+                      <span>id: <span style={{ color: colors.text.readable }}>{derivedName}</span></span>
+                      <span>class: <span style={{ color: colors.text.readable }}>{derivedClass}</span></span>
                     </div>
                   )}
                 </div>
@@ -627,15 +599,15 @@ export default function SchemaManager() {
               {/* Fields */}
               <div style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <div style={{ ...sectionLabel, marginBottom: 0 }}>Fields — {formFields.length}</div>
+                  <div style={{ ...sectionLabel(theme), marginBottom: 0 }}>Fields — {formFields.length}</div>
                 </div>
-                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#333330', marginBottom: 10 }}>
+                <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.quaternary, marginBottom: 10 }}>
                   + confidence, extraction_notes — added automatically to every schema
                 </div>
 
                 {/* column headers */}
                 {formFields.length > 0 && (
-                  <div style={{ display: 'flex', gap: 6, padding: '0 10px 6px 28px', fontFamily: 'DM Mono, monospace', fontSize: 9, color: '#333330', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  <div style={{ display: 'flex', gap: 6, padding: '0 10px 6px 28px', fontFamily: font.mono, fontSize: fontSize.xxs, color: colors.text.quaternary, letterSpacing: letterSpacing.wide4, textTransform: 'uppercase' }}>
                     <div style={{ flex: 1.4 }}>Name</div>
                     <div style={{ flex: 1 }}>Type</div>
                     <div style={{ flex: 2 }}>Description</div>
@@ -654,9 +626,9 @@ export default function SchemaManager() {
 
                 <button
                   onClick={addField}
-                  style={{ width: '100%', background: 'none', border: '1px dashed #1a1a18', borderRadius: 3, padding: '8px', color: '#444440', fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.08em', cursor: 'pointer', transition: 'all 0.15s', marginTop: 4 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#888880'; (e.currentTarget as HTMLElement).style.borderColor = '#2a2a26' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#444440'; (e.currentTarget as HTMLElement).style.borderColor = '#1a1a18' }}
+                  style={{ width: '100%', background: 'none', border: `1px dashed ${colors.border.default}`, borderRadius: radius.md, padding: '8px', color: colors.text.secondary, fontFamily: font.mono, fontSize: fontSize.xs, letterSpacing: letterSpacing.wide3, cursor: 'pointer', transition: transitions.allBase, marginTop: 4 }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.text.readable; (e.currentTarget as HTMLElement).style.borderColor = colors.border.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.secondary; (e.currentTarget as HTMLElement).style.borderColor = colors.border.default }}
                 >
                   + Add field
                 </button>
@@ -668,11 +640,11 @@ export default function SchemaManager() {
                   onClick={() => setPreviewOpen(v => !v)}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, marginBottom: previewOpen ? 10 : 0 }}
                 >
-                  <div style={{ ...sectionLabel, marginBottom: 0 }}>Python preview</div>
-                  <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#333330', transform: previewOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
+                  <div style={{ ...sectionLabel(theme), marginBottom: 0 }}>Python preview</div>
+                  <span style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.quaternary, transform: previewOpen ? 'rotate(180deg)' : 'none', transition: transitions.allSlow, display: 'inline-block' }}>▼</span>
                 </button>
                 {previewOpen && (
-                  <pre style={{ background: '#0d0d0b', border: '1px solid #1a1a18', borderRadius: 3, padding: 16, fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#888880', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
+                  <pre style={{ background: colors.bg.surface, border: `1px solid ${colors.border.default}`, borderRadius: radius.md, padding: 16, fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.readable, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
                     {generatePreview(displayName, formFields)}
                   </pre>
                 )}
@@ -680,7 +652,7 @@ export default function SchemaManager() {
 
               {/* Error */}
               {error && (
-                <div style={{ marginBottom: 16, background: '#1a0d0d', border: '1px solid #3a1a1a', borderRadius: 3, padding: '10px 14px', fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#c85050' }}>
+                <div style={{ ...statusBadge(theme, 'error'), marginBottom: 16, borderRadius: radius.md, padding: '10px 14px', fontFamily: font.mono, fontSize: fontSize.sm }}>
                   {error}
                 </div>
               )}
@@ -688,15 +660,8 @@ export default function SchemaManager() {
               {/* Save */}
               <button
                 onClick={handleSave}
-                disabled={saving || !derivedName}
-                style={{
-                  background: saving || !derivedName ? '#1a1a18' : '#c8a96e',
-                  color: saving || !derivedName ? '#444440' : '#0a0a0a',
-                  border: 'none', borderRadius: 3, padding: '9px 24px',
-                  fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 500,
-                  cursor: saving || !derivedName ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.15s',
-                }}
+                disabled={saveDisabled}
+                style={buttonPrimary(theme, saveDisabled)}
               >
                 {saved ? 'Saved' : saving ? 'Saving...' : mode === 'edit' ? 'Update schema' : 'Create schema'}
               </button>
@@ -709,31 +674,31 @@ export default function SchemaManager() {
       {/* Delete confirmation modal                                         */}
       {/* ---------------------------------------------------------------- */}
       {deleteTarget && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ background: '#0d0d0b', border: '1px solid #1a1a18', padding: 24, width: 340, borderRadius: 4 }}>
-            <div style={{ fontSize: 13, color: '#e8e6e0', marginBottom: 8 }}>Delete schema?</div>
-            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#666660', marginBottom: 6 }}>
+        <div style={modalOverlayStyle(theme)}>
+          <div style={{ ...modalCardStyle(theme), padding: 24, width: 340 }}>
+            <div style={{ fontSize: fontSize.md, color: colors.text.primary, marginBottom: 8 }}>Delete schema?</div>
+            <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.inactive, marginBottom: 6 }}>
               {toDisplayName(deleteTarget)}
             </div>
-            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#444440', marginBottom: 20, lineHeight: 1.6 }}>
+            <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.secondary, marginBottom: 20, lineHeight: 1.6 }}>
               This will delete the schema file, prompt file, and remove it from config.py. This cannot be undone.
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
-                style={{ background: 'none', border: '1px solid #1a1a18', borderRadius: 3, padding: '6px 14px', color: '#666660', fontFamily: 'DM Sans, sans-serif', fontSize: 12, cursor: 'pointer' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#e8e6e0' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#666660' }}
+                style={{ background: 'none', border: `1px solid ${colors.border.default}`, borderRadius: radius.md, padding: '6px 14px', color: colors.text.inactive, fontFamily: font.sans, fontSize: fontSize.base, cursor: 'pointer' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.text.primary }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.inactive }}
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(deleteTarget)}
                 disabled={deleting}
-                style={{ background: '#1a0d0d', border: '1px solid #3a1a1a', borderRadius: 3, padding: '6px 14px', color: '#c85050', fontFamily: 'DM Sans, sans-serif', fontSize: 12, cursor: deleting ? 'not-allowed' : 'pointer' }}
-                onMouseEnter={e => { if (!deleting) (e.currentTarget as HTMLElement).style.background = '#2a1010' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#1a0d0d' }}
+                style={{ background: colors.status.error.bg, border: `1px solid ${colors.status.error.border}`, borderRadius: radius.md, padding: '6px 14px', color: colors.status.error.text, fontFamily: font.sans, fontSize: fontSize.base, cursor: deleting ? 'not-allowed' : 'pointer' }}
+                onMouseEnter={e => { if (!deleting) (e.currentTarget as HTMLElement).style.background = colors.status.error.bgHover }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = colors.status.error.bg }}
               >
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
