@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from extractor import extract_from_document
 from validator import summarize_extraction, validate_extraction

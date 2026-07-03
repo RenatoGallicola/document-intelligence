@@ -2,8 +2,6 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pathlib import Path
 import json
 import shutil
-from fastapi import HTTPException
-from pathlib import Path
 
 router = APIRouter()
 INPUT_DIR = Path("input")
