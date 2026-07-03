@@ -6,9 +6,9 @@
 
 ## What it does
 
-`document-intelligence` takes a PDF (annual report, earnings release, market brief, internal review) and extracts structured JSON from it according to a schema you define. It handles mixed layouts, tables, charts, and narrative text without manual parsing. Every numeric or claimed field is returned with its source evidence (exact quote and location) for spot verification.
+`document-intelligence` takes a PDF (invoice, annual report, earnings release, market brief, internal review) and extracts structured JSON from it according to a schema you define. It handles mixed layouts, tables, charts, and narrative text without manual parsing. Every numeric or claimed field is returned with its source evidence (exact quote and location) for spot verification.
 
-The first use case is extracting competitor financial signals (revenue, margins, regional demand, guidance) from competitors' annual reports and earnings releases, feeding a demand forecasting workflow at Example Corp.
+It ships with two example schemas: a generic **invoice** extractor (see [Output format](#output-format) below, with a real sample PDF and output in `examples/invoice/`) and a **competitor financial report** extractor for market/competitive-intelligence use cases — the same pattern applies to any document type you define.
 
 It ships as a local web app — a FastAPI backend and a React frontend — plus a CLI for batch/scripted use.
 
@@ -57,11 +57,16 @@ document-intelligence/
 │   └── prompt_builder.py            # generic prompt builder for any schema
 │
 ├── schemas/
+│   ├── invoice.py                   # Pydantic schema — generic invoice example
 │   ├── competitor_report.py         # Pydantic schema — competitor financial reports
 │   └── _registry.json               # tracks schemas created via Schema Manager
 │
 ├── prompts/
+│   ├── invoice.py                   # domain-specific extraction rules
 │   └── competitor_report.py         # domain-specific extraction rules
+│
+├── examples/
+│   └── invoice/                     # sample PDF + real extracted output, see Output format below
 │
 ├── frontend/
 │   └── src/
@@ -171,27 +176,24 @@ The app supports light and dark themes (Settings → Appearance), persisted loca
 
 ## Output format
 
-Each processed document produces a JSON file in `output/`, named `{source_pdf_name}_{timestamp}.json`. Numeric and claimed fields are wrapped as `{ "value": ..., "evidence": "..." }` so every extracted number can be traced back to its source. Example, trimmed, for a competitor financial report:
+Each processed document produces a JSON file in `output/`, named `{source_pdf_name}_{timestamp}.json`. Numeric and claimed fields are wrapped as `{ "value": ..., "evidence": "..." }` so every extracted number can be traced back to its source.
+
+`examples/invoice/` has a real, unedited pair: `sample_invoice.pdf` in, `sample_invoice_output.json` out — run it yourself with `python pipeline.py --type invoice examples/invoice/sample_invoice.pdf`. The output:
 
 ```json
 {
-  "competitor_name": "Stanley Black & Decker, Inc.",
-  "report_period": "FY2025",
-  "report_type": "annual report",
-  "report_currency": "USD",
-  "total_revenue": { "value": 15130.4, "evidence": "Page 8, Financial Summary table, Net Sales row: $15,130.4 million" },
-  "total_revenue_yoy_growth_pct": { "value": -0.0153, "evidence": "..." },
-  "gross_margin_pct": { "value": 0.303, "evidence": "..." },
-  "tools_segment_name": "Tools & Outdoor",
-  "tools_segment_revenue": { "value": 13158.2, "evidence": "..." },
-  "regional_breakdown": [
-    { "region": "Europe", "signal": "positive", "commentary": "Net sales increased 2.04% YoY." },
-    { "region": "North America", "signal": "negative", "commentary": "Net sales declined 2.0% YoY." }
+  "vendor_name": "Northwind Office Supplies",
+  "invoice_number": "NW-2024-00817",
+  "invoice_date": "2024-11-03",
+  "due_date": "2024-12-03",
+  "currency": "USD",
+  "total_amount": { "value": 2586.6, "evidence": "Total Due (USD): $2586.60" },
+  "line_items": [
+    { "description": "Ergonomic Office Chair", "quantity": 4.0, "unit_price": { "value": 210.0, "evidence": "210.00" }, "amount": { "value": 840.0, "evidence": "840.00" } },
+    { "description": "Standing Desk (Adjustable)", "quantity": 2.0, "unit_price": { "value": 480.0, "evidence": "480.00" }, "amount": { "value": 960.0, "evidence": "960.00" } }
   ],
-  "construction_demand_signal": "Soft market backdrop with mid-year tariff-related disruptions.",
-  "guidance_direction": "not_provided",
   "confidence": "high",
-  "extraction_notes": "Operating margin not reported at consolidated level."
+  "extraction_notes": null
 }
 ```
 
@@ -200,6 +202,9 @@ Each processed document produces a JSON file in `output/`, named `{source_pdf_na
 ## CLI (batch / scripted use)
 
 ```bash
+# try it on the bundled sample
+python pipeline.py --type invoice examples/invoice/sample_invoice.pdf
+
 # process all PDFs in input/
 python pipeline.py
 

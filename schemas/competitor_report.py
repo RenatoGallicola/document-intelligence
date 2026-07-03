@@ -84,7 +84,7 @@ class CompetitorReportSchema(BaseModel):
     ebitda_margin_pct: Optional[EvidencedValue] = Field(None, description="EBITDA margin as decimal. Use adjusted EBITDA if reported.")
 
     # --- tools / construction-comparable segment ---
-    tools_segment_name: Optional[str] = Field(None, description="Name used by this company for the segment most comparable to Example Corp's business, e.g. 'Tools & Outdoor', 'Power Tools', 'Professional Tools & Equipment'")
+    tools_segment_name: Optional[str] = Field(None, description="Name used by this company for the segment most comparable to the reference company's core business, e.g. 'Tools & Outdoor', 'Power Tools', 'Professional Tools & Equipment'")
     tools_segment_revenue: Optional[EvidencedValue] = Field(None, description="Revenue of the tools/construction segment in millions")
     tools_segment_yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="Reported YoY growth of the tools segment as decimal")
     tools_segment_organic_growth_pct: Optional[EvidencedValue] = Field(None, description="Organic YoY growth of the tools segment as decimal. Only extract if explicitly stated.")
