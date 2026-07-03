@@ -60,6 +60,7 @@ export default function App() {
           onCompletedFiles={setCompletedFiles}
           totalFiles={totalFiles}
           onTotalFiles={setTotalFiles}
+          apiKeySet={apiKeySet}
         />
       )
       case 'explorer': return <OutputExplorer />
