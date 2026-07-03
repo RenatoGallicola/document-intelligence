@@ -106,42 +106,59 @@ export default function Sidebar({ currentPage, onNavigate, model, apiKeySet }: P
       overflow: 'hidden',
     }}>
       <div style={{
-        display: 'flex',
-        alignItems: collapsed ? 'center' : 'flex-start',
-        justifyContent: collapsed ? 'center' : 'space-between',
         padding: collapsed ? '20px 0' : '24px 20px 20px',
         borderBottom: `1px solid ${colors.border.default}`,
       }}>
-        {!collapsed && (
-          <div style={{ minWidth: 0, overflow: 'hidden' }}>
-            <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, fontWeight: fontWeight.light, color: colors.text.midGray, letterSpacing: letterSpacing.wide6, textTransform: 'uppercase', marginBottom: 4 }}>
-              v0.1.0
+        {collapsed ? (
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={toggleCollapsed}
+              title="Expand sidebar"
+              style={{
+                background: 'none',
+                border: `1px solid ${colors.border.default}`,
+                borderRadius: radius.sm,
+                width: 22, height: 22,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: colors.text.readable,
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.text.primary; (e.currentTarget as HTMLElement).style.borderColor = colors.border.hover }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.readable; (e.currentTarget as HTMLElement).style.borderColor = colors.border.default }}
+            >
+              <ChevronIcon direction="right" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, fontWeight: fontWeight.light, color: colors.text.midGray, letterSpacing: letterSpacing.wide6, textTransform: 'uppercase' }}>
+                v0.1.0
+              </div>
+              <button
+                onClick={toggleCollapsed}
+                title="Collapse sidebar"
+                style={{
+                  background: 'none',
+                  border: `1px solid ${colors.border.default}`,
+                  borderRadius: radius.sm,
+                  width: 22, height: 22,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: colors.text.readable,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.text.primary; (e.currentTarget as HTMLElement).style.borderColor = colors.border.hover }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.readable; (e.currentTarget as HTMLElement).style.borderColor = colors.border.default }}
+              >
+                <ChevronIcon direction="left" />
+              </button>
             </div>
-            <div style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text.primary, letterSpacing: letterSpacing.tight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text.primary, letterSpacing: letterSpacing.tight }}>
               Document Intelligence
             </div>
-          </div>
+          </>
         )}
-        <button
-          onClick={toggleCollapsed}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          style={{
-            background: 'none',
-            border: `1px solid ${colors.border.default}`,
-            borderRadius: radius.sm,
-            width: 22, height: 22,
-            marginLeft: collapsed ? 0 : 12,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: colors.text.readable,
-            cursor: 'pointer',
-            flexShrink: 0,
-            marginTop: collapsed ? 0 : 2,
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = colors.text.primary; (e.currentTarget as HTMLElement).style.borderColor = colors.border.hover }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = colors.text.readable; (e.currentTarget as HTMLElement).style.borderColor = colors.border.default }}
-        >
-          <ChevronIcon direction={collapsed ? 'right' : 'left'} />
-        </button>
       </div>
 
       <nav style={{ flex: 1, padding: '12px 0' }}>
