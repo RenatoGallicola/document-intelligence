@@ -200,7 +200,7 @@ export default function Sidebar({ currentPage, onNavigate, model, apiKeySet }: P
       </nav>
 
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
         padding: collapsed ? '16px 0' : '16px 20px',
         borderTop: `1px solid ${colors.border.default}`,
       }}>
