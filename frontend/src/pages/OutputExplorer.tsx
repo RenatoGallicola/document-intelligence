@@ -1,30 +1,14 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import JSZip from 'jszip'
+import { useTheme } from '../theme/useTheme'
+import { font, fontSize, fontWeight, letterSpacing, radius, transitions } from '../theme/tokens'
+import { topbarStyle, fieldLabel, statusBadge, navRowStyle, modalOverlayStyle, modalCardStyle } from '../theme/styles'
 
 interface OutputFile {
   filename: string
   path: string
   data: Record<string, unknown>
-}
-
-const topbarStyle: React.CSSProperties = {
-  height: 52,
-  borderBottom: '1px solid #1a1a18',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '0 28px',
-  flexShrink: 0,
-}
-
-const monoLabel: React.CSSProperties = {
-  fontFamily: 'DM Mono, monospace',
-  fontSize: 11,
-  color: '#444440',
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  marginBottom: 4,
 }
 
 // --- type guards ---
@@ -62,20 +46,22 @@ function formatLabel(key: string): string {
 // --- sub-components ---
 
 function ExpandableRow({ item }: { item: Record<string, unknown> }) {
+  const { theme } = useTheme()
+  const { colors } = theme
   const [open, setOpen] = useState(false)
   const title = Object.values(item).find(v => typeof v === 'string') as string || 'Item'
 
   return (
-    <div style={{ border: '1px solid #1a1a18', borderRadius: 3, marginBottom: 6, overflow: 'hidden' }}>
+    <div style={{ border: `1px solid ${colors.border.default}`, borderRadius: radius.md, marginBottom: 6, overflow: 'hidden' }}>
       <button
         onClick={() => setOpen(!open)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#111110', border: 'none', cursor: 'pointer', color: '#888880', fontFamily: 'DM Sans, sans-serif', fontSize: 12, textAlign: 'left' }}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: colors.bg.raised, border: 'none', cursor: 'pointer', color: colors.text.readable, fontFamily: font.sans, fontSize: fontSize.base, textAlign: 'left' }}
       >
         {title}
-        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
+        <span style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary, transform: open ? 'rotate(180deg)' : 'none', transition: transitions.allSlow, display: 'inline-block' }}>▼</span>
       </button>
       {open && (
-        <div style={{ padding: 12, background: '#0d0d0b', borderTop: '1px solid #1a1a18' }}>
+        <div style={{ padding: 12, background: colors.bg.surface, borderTop: `1px solid ${colors.border.default}` }}>
           {Object.entries(item).map(([k, v]) => {
             if (v === null || v === undefined) return null
             const label = formatLabel(k)
@@ -85,17 +71,17 @@ function ExpandableRow({ item }: { item: Record<string, unknown> }) {
               if (v.value === null) return null
               return (
                 <div key={k} style={{ marginBottom: 8 }}>
-                  <div style={monoLabel}>{label}</div>
-                  <div style={{ fontSize: 13, color: '#e8e6e0' }}>{String(v.value)}</div>
-                  {v.evidence && <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', marginTop: 2 }}>{v.evidence}</div>}
+                  <div style={fieldLabel(theme)}>{label}</div>
+                  <div style={{ fontSize: fontSize.md, color: colors.text.primary }}>{String(v.value)}</div>
+                  {v.evidence && <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.muted, marginTop: 2 }}>{v.evidence}</div>}
                 </div>
               )
             }
 
             return (
               <div key={k} style={{ marginBottom: 8 }}>
-                <div style={monoLabel}>{label}</div>
-                <div style={{ fontSize: 12, color: '#b8b6b0', lineHeight: 1.5 }}>{String(v)}</div>
+                <div style={fieldLabel(theme)}>{label}</div>
+                <div style={{ fontSize: fontSize.base, color: colors.text.tertiary, lineHeight: 1.5 }}>{String(v)}</div>
               </div>
             )
           })}
@@ -172,23 +158,13 @@ function extractTimestamp(filename: string): string | null {
 // --- icons ---
 
 function TrashIcon() {
+  const { theme } = useTheme()
+  const stroke = theme.colors.status.error.text
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M3 6h18"
-        stroke="#c85050"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M8 6V4h8v2"
-        stroke="#c85050"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M6 6l1 16h10l1-16"
-        stroke="#c85050"
-        strokeWidth="1.5"
-      />
+      <path d="M3 6h18" stroke={stroke} strokeWidth="1.5" />
+      <path d="M8 6V4h8v2" stroke={stroke} strokeWidth="1.5" />
+      <path d="M6 6l1 16h10l1-16" stroke={stroke} strokeWidth="1.5" />
     </svg>
   )
 }
@@ -196,6 +172,8 @@ function TrashIcon() {
 // --- main component ---
 
 export default function OutputExplorer() {
+  const { theme } = useTheme()
+  const { colors } = theme
   const [outputs, setOutputs] = useState<OutputFile[]>([])
   const [selected, setSelected] = useState<OutputFile | null>(null)
   const [activeTab, setActiveTab] = useState<'fields' | 'lists' | 'raw'>('fields')
@@ -207,7 +185,7 @@ export default function OutputExplorer() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [hoverAction, setHoverAction] = useState<'cancel' | 'delete' | null>(null)
   const [zipping, setZipping] = useState(false)
-  
+
   const visibleOutputs = outputs.filter(o =>
     matchesSearch(o, search)
   )
@@ -385,54 +363,54 @@ export default function OutputExplorer() {
 
   return (
     <>
-      <div style={topbarStyle}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: '#e8e6e0' }}>Output Explorer</div>
+      <div style={topbarStyle(theme)}>
+        <div style={{ fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text.primary }}>Output Explorer</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {outputs.length > 0 && (
             <button
               onClick={handleDownloadAll}
               disabled={zipping}
               style={{
-                fontSize: 10,
-                fontFamily: 'DM Mono, monospace',
-                letterSpacing: '0.08em',
+                fontSize: fontSize.xs,
+                fontFamily: font.mono,
+                letterSpacing: letterSpacing.wide3,
                 textTransform: 'uppercase',
                 background: 'none',
-                border: '1px solid #1a1a18',
-                color: zipping ? '#333330' : '#444440',
+                border: `1px solid ${colors.border.default}`,
+                color: zipping ? colors.text.quaternary : colors.text.secondary,
                 padding: '3px 10px',
-                borderRadius: 2,
+                borderRadius: radius.sm,
                 cursor: zipping ? 'not-allowed' : 'pointer',
-                transition: 'color 0.15s',
+                transition: transitions.colorFast,
               }}
-              onMouseEnter={e => { if (!zipping) (e.currentTarget as HTMLElement).style.color = '#888880' }}
-              onMouseLeave={e => { if (!zipping) (e.currentTarget as HTMLElement).style.color = '#444440' }}
+              onMouseEnter={e => { if (!zipping) (e.currentTarget as HTMLElement).style.color = colors.text.readable }}
+              onMouseLeave={e => { if (!zipping) (e.currentTarget as HTMLElement).style.color = colors.text.secondary }}
             >
               {zipping ? 'Zipping...' : 'Download all'}
             </button>
           )}
-          <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', letterSpacing: '0.05em' }}>
+          <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.muted, letterSpacing: letterSpacing.wide1 }}>
             {outputs.length} document{outputs.length !== 1 ? 's' : ''}
           </div>
         </div>
       </div>
 
       {loadingList ? (
-        <div style={{ padding: 28, fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>Loading...</div>
+        <div style={{ padding: 28, fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary }}>Loading...</div>
       ) : outputs.length === 0 ? (
-        <div style={{ padding: 28, fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440' }}>No outputs found. Process some documents first.</div>
+        <div style={{ padding: 28, fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary }}>No outputs found. Process some documents first.</div>
       ) : (
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
           {/* left panel */}
-          <div style={{ width: 240, minWidth: 240, borderRight: '1px solid #1a1a18', overflowY: 'auto' }}>
-            
+          <div style={{ width: 240, minWidth: 240, borderRight: `1px solid ${colors.border.default}`, overflowY: 'auto' }}>
+
             <div style={{
               padding: '12px 12px 8px',
               display: 'flex',
               flexDirection: 'column',
               gap: 8,
-              borderBottom: '1px solid #1a1a18'
+              borderBottom: `1px solid ${colors.border.default}`
             }}>
               {/* SEARCH INPUT */}
               <input
@@ -440,13 +418,13 @@ export default function OutputExplorer() {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
                 style={{
-                  background: '#0d0d0b',
-                  border: '1px solid #1a1a18',
-                  color: '#e8e6e0',
-                  fontSize: 11,
+                  background: colors.bg.surface,
+                  border: `1px solid ${colors.border.default}`,
+                  color: colors.text.primary,
+                  fontSize: fontSize.sm,
                   padding: '4px 8px',
                   outline: 'none',
-                  fontFamily: 'DM Sans, sans-serif'
+                  fontFamily: font.sans
                 }}
               />
 
@@ -454,10 +432,10 @@ export default function OutputExplorer() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                fontFamily: 'DM Mono, monospace',
-                fontSize: 11,
-                color: '#3a3a36',
-                letterSpacing: '0.12em',
+                fontFamily: font.mono,
+                fontSize: fontSize.sm,
+                color: colors.text.muted,
+                letterSpacing: letterSpacing.wide5,
                 textTransform: 'uppercase'
               }}>
                 <div>
@@ -467,13 +445,13 @@ export default function OutputExplorer() {
                 <button
                   onClick={() => setGroupByType(v => !v)}
                   style={{
-                    fontSize: 10,
-                    fontFamily: 'DM Mono, monospace',
+                    fontSize: fontSize.xs,
+                    fontFamily: font.mono,
                     background: 'none',
-                    border: '1px solid #1a1a18',
-                    color: groupByType ? '#c8a96e' : '#444440',
+                    border: `1px solid ${colors.border.default}`,
+                    color: groupByType ? colors.accent.default : colors.text.secondary,
                     padding: '2px 8px',
-                    borderRadius: 2,
+                    borderRadius: radius.sm,
                     cursor: 'pointer'
                   }}
                 >
@@ -488,6 +466,7 @@ export default function OutputExplorer() {
             {!groupByType && outputs.filter(o => matchesSearch(o, search)).map(o => {
               const isActive = selected?.filename === o.filename
               const title = inferTitle(o.data, o.filename)
+              const row = navRowStyle(theme, isActive)
 
               return (
                 <button
@@ -501,23 +480,23 @@ export default function OutputExplorer() {
                     width: '100%',
                     display: 'block',
                     padding: '10px 16px',
-                    background: isActive ? '#161614' : 'transparent',
+                    background: row.background,
                     border: 'none',
-                    borderLeft: `2px solid ${isActive ? '#c8a96e' : 'transparent'}`,
+                    borderLeft: row.borderLeft,
                     cursor: 'pointer',
                     textAlign: 'left',
-                    position: 'relative' 
+                    position: 'relative'
                   }}
                 >
-                  <div style={{ fontSize: 11, color: isActive ? '#e8e6e0' : '#666660', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: fontSize.sm, color: isActive ? colors.text.primary : colors.text.inactive, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {title}
                   </div>
 
-                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#333330', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.quaternary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {inferDocumentType(o.data)}
                   </div>
 
-                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#333330', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.quaternary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {formatFilename(o.filename)}
                   </div>
                 </button>
@@ -531,7 +510,7 @@ export default function OutputExplorer() {
 
               return (
                 <div key={type}>
-                  
+
                   {/* GROUP HEADER */}
                   <button
                     onClick={() => toggleGroup(type)}
@@ -542,10 +521,10 @@ export default function OutputExplorer() {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      fontFamily: 'DM Mono, monospace',
-                      fontSize: 11,
-                      color: '#c8a96e',
-                      letterSpacing: '0.12em',
+                      fontFamily: font.mono,
+                      fontSize: fontSize.sm,
+                      color: colors.accent.default,
+                      letterSpacing: letterSpacing.wide5,
                       textTransform: 'uppercase',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -554,7 +533,7 @@ export default function OutputExplorer() {
                   >
                     <span>{formatDocumentType(type)}</span>
 
-                    <span style={{ color: '#444440' }}>
+                    <span style={{ color: colors.text.secondary }}>
                       {items.length}
                     </span>
                   </button>
@@ -562,6 +541,7 @@ export default function OutputExplorer() {
                   {/* ITEMS */}
                   {isOpen && items.map(o => {
                     const isActive = selected?.filename === o.filename
+                    const row = navRowStyle(theme, isActive)
 
                     return (
                       <button
@@ -571,16 +551,16 @@ export default function OutputExplorer() {
                           width: '100%',
                           display: 'block',
                           padding: '10px 16px',
-                          background: isActive ? '#161614' : 'transparent',
+                          background: row.background,
                           border: 'none',
-                          borderLeft: `2px solid ${isActive ? '#c8a96e' : 'transparent'}`,
+                          borderLeft: row.borderLeft,
                           cursor: 'pointer',
                           textAlign: 'left'
                         }}
                       >
                         <div style={{
-                          fontSize: 11,
-                          color: isActive ? '#e8e6e0' : '#666660',
+                          fontSize: fontSize.sm,
+                          color: isActive ? colors.text.primary : colors.text.inactive,
                           marginBottom: 2,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -590,9 +570,9 @@ export default function OutputExplorer() {
                         </div>
 
                         <div style={{
-                          fontFamily: 'DM Mono, monospace',
-                          fontSize: 11,
-                          color: '#333330',
+                          fontFamily: font.mono,
+                          fontSize: fontSize.sm,
+                          color: colors.text.quaternary,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap'
@@ -613,20 +593,20 @@ export default function OutputExplorer() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
               {/* document header */}
-              <div style={{ padding: '16px 24px', borderBottom: '1px solid #1a1a18', flexShrink: 0 }}>
+              <div style={{ padding: '16px 24px', borderBottom: `1px solid ${colors.border.default}`, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#c8a96e', marginBottom: 8 }}>
+                    <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.accent.default, marginBottom: 8 }}>
                       {inferDocumentType(data)}
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 500, color: '#e8e6e0', marginBottom: 6 }}>
+                    <div style={{ fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.text.primary, marginBottom: 6 }}>
                       {inferTitle(data, selected.filename)}
                     </div>
                     {extractTimestamp(selected.filename) && (
                       <div style={{
-                        fontFamily: 'DM Mono, monospace',
-                        fontSize: 11,
-                        color: '#444440',
+                        fontFamily: font.mono,
+                        fontSize: fontSize.sm,
+                        color: colors.text.secondary,
                         marginBottom: 8
                       }}>
                         {extractTimestamp(selected.filename)}
@@ -637,7 +617,7 @@ export default function OutputExplorer() {
                     {data.confidence !== undefined && data.confidence !== null && (
                       <span
                         title="Confidence"
-                        style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#1a1608', color: '#c8a96e', border: '1px solid #3a3020', cursor: 'default' }}
+                        style={{ ...statusBadge(theme, 'warning'), fontFamily: font.mono, fontSize: fontSize.sm, letterSpacing: letterSpacing.wide3, padding: '2px 8px', borderRadius: radius.sm, cursor: 'default' }}
                       >
                         {String(data.confidence)}
                       </span>
@@ -645,9 +625,9 @@ export default function OutputExplorer() {
                     <a
                       href={`data:application/json,${encodeURIComponent(JSON.stringify(data, null, 2))}`}
                       download={selected.filename}
-                      style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#444440', letterSpacing: '0.08em', textDecoration: 'none', padding: '2px 8px', border: '1px solid #1a1a18', borderRadius: 2 } as React.CSSProperties}
-                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = '#888880' }}
-                      onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = '#444440' }}
+                      style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.secondary, letterSpacing: letterSpacing.wide3, textDecoration: 'none', padding: '2px 8px', border: `1px solid ${colors.border.default}`, borderRadius: radius.sm } as React.CSSProperties}
+                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = colors.text.readable }}
+                      onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = colors.text.secondary }}
                     >
                       Download
                     </a>
@@ -661,14 +641,14 @@ export default function OutputExplorer() {
                       }}
                       style={{
                         background: 'none',
-                        border: '1px solid #3a1a1a',
-                        color: '#c85050',
+                        border: `1px solid ${colors.status.error.border}`,
+                        color: colors.status.error.text,
                         padding: '2px 8px',
                         cursor: 'pointer',
-                        fontFamily: 'DM Mono, monospace',
-                        fontSize: 11,
+                        fontFamily: font.mono,
+                        fontSize: fontSize.sm,
                         opacity: 0.6,
-                        transition: 'opacity 0.15s ease'
+                        transition: transitions.opacityBase
                       }}
                     >
                       <TrashIcon />
@@ -678,17 +658,17 @@ export default function OutputExplorer() {
               </div>
 
               {/* tabs */}
-              <div style={{ display: 'flex', borderBottom: '1px solid #1a1a18', flexShrink: 0 }}>
+              <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border.default}`, flexShrink: 0 }}>
                 {tabs.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     style={{
                       padding: '10px 20px', background: 'none', border: 'none',
-                      borderBottom: `2px solid ${activeTab === tab.id ? '#c8a96e' : 'transparent'}`,
-                      color: activeTab === tab.id ? '#e8e6e0' : '#444440',
-                      fontFamily: 'DM Sans, sans-serif', fontSize: 12, cursor: 'pointer',
-                      transition: 'all 0.15s', marginBottom: -1,
+                      borderBottom: `2px solid ${activeTab === tab.id ? colors.accent.default : 'transparent'}`,
+                      color: activeTab === tab.id ? colors.text.primary : colors.text.secondary,
+                      fontFamily: font.sans, fontSize: fontSize.base, cursor: 'pointer',
+                      transition: transitions.allBase, marginBottom: -1,
                     }}
                   >
                     {tab.label}
@@ -706,8 +686,8 @@ export default function OutputExplorer() {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
                         {simple.map(([k, v]) => (
                           <div key={k}>
-                            <div style={monoLabel}>{formatLabel(k)}</div>
-                            <div style={{ fontSize: 13, color: '#e8e6e0' }}>{String(v)}</div>
+                            <div style={fieldLabel(theme)}>{formatLabel(k)}</div>
+                            <div style={{ fontSize: fontSize.md, color: colors.text.primary }}>{String(v)}</div>
                           </div>
                         ))}
                       </div>
@@ -716,16 +696,16 @@ export default function OutputExplorer() {
                     {/* evidenced fields */}
                     {evidenced.length > 0 && (
                       <>
-                        {simple.length > 0 && <div style={{ height: 1, background: '#1a1a18', margin: '4px 0 20px' }} />}
+                        {simple.length > 0 && <div style={{ height: 1, background: colors.border.default, margin: '4px 0 20px' }} />}
                         {evidenced.map(([k, v]) => {
                           const ev = v as { value: number | null; evidence: string | null }
                           if (ev.value === null) return null
                           return (
                             <div key={k} style={{ marginBottom: 14 }}>
-                              <div style={monoLabel}>{formatLabel(k)}</div>
-                              <div style={{ fontSize: 13, color: '#e8e6e0', marginBottom: 2 }}>{String(ev.value)}</div>
+                              <div style={fieldLabel(theme)}>{formatLabel(k)}</div>
+                              <div style={{ fontSize: fontSize.md, color: colors.text.primary, marginBottom: 2 }}>{String(ev.value)}</div>
                               {ev.evidence && (
-                                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', lineHeight: 1.5 }}>
+                                <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.muted, lineHeight: 1.5 }}>
                                   {ev.evidence}
                                 </div>
                               )}
@@ -741,7 +721,7 @@ export default function OutputExplorer() {
                   <div>
                     {lists.map(([k, v]) => (
                       <div key={k} style={{ marginBottom: 24 }}>
-                        <div style={{ ...monoLabel, marginBottom: 10 }}>{formatLabel(k)}</div>
+                        <div style={{ ...fieldLabel(theme), marginBottom: 10 }}>{formatLabel(k)}</div>
                         {(v as Record<string, unknown>[]).map((item, i) => (
                           <ExpandableRow key={i} item={item} />
                         ))}
@@ -751,7 +731,7 @@ export default function OutputExplorer() {
                 )}
 
                 {activeTab === 'raw' && (
-                  <pre style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#888880', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                  <pre style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.readable, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
                     {JSON.stringify(data, null, 2)}
                   </pre>
                 )}
@@ -763,33 +743,19 @@ export default function OutputExplorer() {
       )}
 
       {deleteTarget && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999
-          }}
-        >
+        <div style={modalOverlayStyle(theme)}>
           <div
             style={{
-              background: '#0d0d0b',
-              border: '1px solid #1a1a18',
+              ...modalCardStyle(theme),
               padding: 20,
               width: 320
             }}
           >
-            <div style={{ fontSize: 13, color: '#e8e6e0', marginBottom: 10 }}>
+            <div style={{ fontSize: fontSize.md, color: colors.text.primary, marginBottom: 10 }}>
               Delete document?
             </div>
 
-            <div style={{ fontSize: 11, color: '#666660', marginBottom: 20 }}>
+            <div style={{ fontSize: fontSize.sm, color: colors.text.inactive, marginBottom: 20 }}>
               {deleteTarget}
             </div>
 
@@ -802,12 +768,12 @@ export default function OutputExplorer() {
                   setHoverAction(null)
                 }}
                 style={{
-                  background: hoverAction === 'cancel' ? '#1a1a18' : 'none',
-                  border: '1px solid #1a1a18',
-                  color: hoverAction === 'cancel' ? '#e8e6e0' : '#666660',
+                  background: hoverAction === 'cancel' ? colors.border.default : 'none',
+                  border: `1px solid ${colors.border.default}`,
+                  color: hoverAction === 'cancel' ? colors.text.primary : colors.text.inactive,
                   padding: '4px 10px',
                   cursor: 'pointer',
-                  transition: 'all 0.15s ease'
+                  transition: transitions.allBase
                 }}
               >
                 Cancel
@@ -822,12 +788,12 @@ export default function OutputExplorer() {
                   setHoverAction(null)
                 }}
                 style={{
-                  background: hoverAction === 'delete' ? '#3a1a1a' : '#1a0d0d',
-                  border: '1px solid #3a1a1a',
-                  color: '#c85050',
+                  background: hoverAction === 'delete' ? colors.status.error.bgHover : colors.status.error.bg,
+                  border: `1px solid ${colors.status.error.border}`,
+                  color: colors.status.error.text,
                   padding: '4px 10px',
                   cursor: 'pointer',
-                  transition: 'all 0.15s ease'
+                  transition: transitions.allBase
                 }}
               >
                 Delete
