@@ -1,30 +1,43 @@
 # document-intelligence
 
-> Extract structured data from any PDF — financial reports, market research, internal documents — using LLM-powered pipelines with validated schemas.
+> Extract structured, validated data from any PDF using an LLM vision model — through a web app, no code required to add a new document type.
 
 ---
 
 ## What it does
 
-`document-intelligence` takes heterogeneous PDF documents (annual reports, investor presentations, market briefs, internal reviews) and extracts structured, validated JSON according to a schema you define. It handles mixed layouts, tables, charts, and narrative text without manual parsing.
+`document-intelligence` takes a PDF (annual report, earnings release, market brief, internal review) and extracts structured JSON from it according to a schema you define. It handles mixed layouts, tables, charts, and narrative text without manual parsing. Every numeric or claimed field is returned with its source evidence (exact quote and location) for spot verification.
+
+The first use case is extracting competitor financial signals (revenue, margins, regional demand, guidance) from competitors' annual reports and earnings releases, feeding a demand forecasting workflow at Example Corp.
+
+It ships as a local web app — a FastAPI backend and a React frontend — plus a CLI for batch/scripted use.
 
 ---
 
 ## How it works
 
 ```
-PDF (any format)
-      ↓
-Gemini vision model reads the document
-      ↓
-Extracts fields defined in your schema
-      ↓
-Pydantic validates the output
-      ↓
-Structured JSON saved locally or to a Delta table
+PDF
+  ↓
+Gemini vision model reads the document, guided by a JSON-schema-driven prompt
+  ↓
+Response parsed (with truncation repair) and validated against the schema (Pydantic)
+  ↓
+Structured JSON saved to output/, viewable and downloadable in the app
 ```
 
-Each document type has its own **schema** (what to extract) and **prompt** (how to extract it). The core pipeline is generic and never changes.
+Each document type has its own **schema** (what to extract) and **prompt** (domain-specific extraction rules). The extraction pipeline itself is generic and never changes — adding a document type never touches it.
+
+---
+
+## The app
+
+Four pages, in the sidebar:
+
+- **Processor** — drag and drop PDFs, pick a document type, extract. Shows live progress and a per-file summary (fields extracted vs. missing, confidence).
+- **Output Explorer** — browse every past extraction. Search, group by document type, inspect fields/lists/raw JSON, download one result or all of them as a `.zip`, delete.
+- **Schema Manager** — create and edit document types entirely from the UI: name a schema, add fields (text, number, boolean, evidenced value, list, nested object), see the generated Pydantic code live, save. `confidence` and `extraction_notes` are added to every schema automatically. No Python required for the common case.
+- **Settings** — Gemini API key, default model (applies globally, to every document type), and light/dark appearance.
 
 ---
 
@@ -33,28 +46,42 @@ Each document type has its own **schema** (what to extract) and **prompt** (how 
 ```
 document-intelligence/
 │
+├── backend/
+│   ├── main.py                      # FastAPI app, CORS, router registration
+│   └── routers/
+│       ├── documents.py             # POST /process, GET/DELETE /outputs
+│       ├── schemas.py               # CRUD for document-type schemas (backs Schema Manager)
+│       └── settings.py              # API key, default model, model list
+│
 ├── core/
-│   └── prompt_builder.py        # generic prompt builder for any schema
+│   └── prompt_builder.py            # generic prompt builder for any schema
 │
 ├── schemas/
-│   ├── competitor_report.py     # Pydantic schema — competitor financial reports
-│   ├── internal_report.py       # placeholder
-│   └── market_report.py         # placeholder
+│   ├── competitor_report.py         # Pydantic schema — competitor financial reports
+│   └── _registry.json               # tracks schemas created via Schema Manager
 │
 ├── prompts/
-│   ├── competitor_report.py     # domain-specific extraction rules
-│   ├── internal_report.py       # placeholder
-│   └── market_report.py         # placeholder
+│   └── competitor_report.py         # domain-specific extraction rules
 │
-├── input/                       # drop PDFs here
-├── output/                      # extracted JSON files saved here
-├── utils/                       # diagnostic scripts (list_models, test_api)
+├── frontend/
+│   └── src/
+│       ├── App.tsx                  # root component, global state, page routing
+│       ├── theme/                   # design tokens, shared style factories, light/dark context
+│       ├── components/              # Sidebar, ProgressBar
+│       └── pages/                   # Processor, OutputExplorer, SchemaManager, Settings
 │
-├── config.py                    # document type registry
-├── extractor.py                 # Gemini API call + response parsing
-├── validator.py                 # Pydantic validation + summary
-├── storage.py                   # local JSON and Delta table storage
-└── pipeline.py                  # orchestration + CLI
+├── input/                           # PDF working directory (gitignored)
+├── output/                          # extracted JSON files (gitignored)
+├── utils/                           # list_models.py, test_api.py
+│
+├── config.py                        # document type registry
+├── extractor.py                     # Gemini call, retry, parse, validate
+├── validator.py                     # Pydantic validation + extraction summary
+├── storage.py                       # save extraction result to output/
+├── pipeline.py                      # orchestration + CLI
+│
+├── .env                             # GEMINI_API_KEY, DEFAULT_MODEL (gitignored)
+└── requirements.txt
 ```
 
 ---
@@ -66,10 +93,14 @@ document-intelligence/
 ```bash
 git clone https://github.com/YOUR_USERNAME/document-intelligence.git
 cd document-intelligence
+
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 # source .venv/bin/activate   # macOS / Linux
 pip install -r requirements.txt
+
+cd frontend
+npm install
 ```
 
 ### 2. Set your API key
@@ -80,93 +111,67 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=your_key_here
 ```
 
-Get a free API key at [aistudio.google.com](https://aistudio.google.com).
+Get a free key at [aistudio.google.com](https://aistudio.google.com). You can also paste it later from the Settings page.
 
 ### 3. Run
 
 ```bash
-# process all PDFs in input/
-python pipeline.py
+# terminal 1 — backend
+uvicorn backend.main:app --reload
 
-# process a specific file
-python pipeline.py input/report.pdf
-
-# process multiple files
-python pipeline.py input/report_a.pdf input/report_b.pdf
-
-# use a different document type
-python pipeline.py --type market_report input/report.pdf
+# terminal 2 — frontend
+cd frontend
+npm run dev
 ```
 
-Extracted JSON files are saved to `output/`.
+- App: [http://localhost:5173](http://localhost:5173)
+- API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+Drop a PDF into the Processor tab, pick a document type, and extract.
 
 ---
 
 ## Adding a new document type
 
-Three steps — no changes to the core pipeline.
+**From the app (recommended):** open **Schema Manager** → *New schema* → name it, add fields with their type and a description (used to instruct the model), save. This generates the Pydantic schema, a starter prompt, and registers the type — all without touching a file.
 
-**1. Define the schema** in `schemas/your_type.py`:
-
-```python
-from pydantic import BaseModel, Field
-from typing import Optional
-
-class YourSchema(BaseModel):
-    title: Optional[str] = Field(None, description="Document title")
-    summary: Optional[str] = Field(None, description="Executive summary, max 3 sentences")
-    key_findings: list[str] = Field(default_factory=list)
-    confidence: str = Field("low")
-    extraction_notes: Optional[str] = Field(None)
-```
-
-**2. Write the domain instructions** in `prompts/your_type.py`:
+**By hand** (for advanced cases — custom validators, enums, cross-field logic): add `schemas/your_type.py` (a Pydantic model ending in `Schema`) and `prompts/your_type.py` (a `YOUR_TYPE_INSTRUCTIONS` string), then register both in `config.py`:
 
 ```python
-YOUR_TYPE_INSTRUCTIONS = """
-Domain-specific rules for this document type:
-- key_findings: extract only explicitly stated conclusions, not inferences
-- summary: prioritize quantitative statements over qualitative ones
-"""
-```
-
-**3. Register the document type** in `config.py`:
-
-```python
-from schemas.your_type import YourSchema
+from schemas.your_type import YourTypeSchema
 from prompts.your_type import YOUR_TYPE_INSTRUCTIONS
 
 DOCUMENT_TYPES = {
     ...
     "your_type": {
-        "schema": YourSchema,
-        "prompt": build_prompt(YourSchema, YOUR_TYPE_INSTRUCTIONS),
-        "model": "gemini-3.5-flash",
+        "schema": YourTypeSchema,
+        "prompt": build_prompt(YourTypeSchema, YOUR_TYPE_INSTRUCTIONS),
         "storage_table": "your_table",
     },
 }
 ```
 
-That's it. Run with `python pipeline.py --type your_type input/doc.pdf`.
+Either way, the type appears automatically in the Processor dropdown.
 
 ---
 
-## Supported models
+## Model and appearance
 
-The model is configurable per document type in `config.py`. Any model available via the Google GenAI API works. To list models available to your API key:
+The Gemini model is a single global setting (Settings → Model) — it applies to every document type, not per-schema. Change it and save; extraction picks it up immediately, no restart needed.
+
+To see which models your key can access:
 
 ```bash
 python utils/list_models.py
 ```
 
-For documents containing sensitive internal data, replace the model with an Azure OpenAI endpoint or any API-compatible model running within your security perimeter.
+The app supports light and dark themes (Settings → Appearance), persisted locally in the browser.
 
 ---
 
 ## Output format
 
-Each processed document produces a JSON file in `output/` 
-named `{source_pdf_name}_{timestamp}.json`. Example output for a competitor financial report:
+Each processed document produces a JSON file in `output/`, named `{source_pdf_name}_{timestamp}.json`. Numeric and claimed fields are wrapped as `{ "value": ..., "evidence": "..." }` so every extracted number can be traced back to its source. Example, trimmed, for a competitor financial report:
 
 ```json
 {
@@ -174,17 +179,16 @@ named `{source_pdf_name}_{timestamp}.json`. Example output for a competitor fina
   "report_period": "FY2025",
   "report_type": "annual report",
   "report_currency": "USD",
-  "total_revenue": 15130.4,
-  "total_revenue_yoy_growth_pct": -0.0153,
-  "gross_margin_pct": 0.303,
-  "tools_segment_revenue": 13158.2,
-  "tools_segment_yoy_growth_pct": -0.011,
+  "total_revenue": { "value": 15130.4, "evidence": "Page 8, Financial Summary table, Net Sales row: $15,130.4 million" },
+  "total_revenue_yoy_growth_pct": { "value": -0.0153, "evidence": "..." },
+  "gross_margin_pct": { "value": 0.303, "evidence": "..." },
   "tools_segment_name": "Tools & Outdoor",
-  "regional_signals": [
-    { "region": "Europe", "signal": "positive", "evidence": "Net sales increased 2.04% YoY." },
-    { "region": "North America", "signal": "negative", "evidence": "Net sales declined 2.0% YoY." }
+  "tools_segment_revenue": { "value": 13158.2, "evidence": "..." },
+  "regional_breakdown": [
+    { "region": "Europe", "signal": "positive", "commentary": "Net sales increased 2.04% YoY." },
+    { "region": "North America", "signal": "negative", "commentary": "Net sales declined 2.0% YoY." }
   ],
-  "macro_construction_commentary": "Soft market backdrop with mid-year tariff-related disruptions.",
+  "construction_demand_signal": "Soft market backdrop with mid-year tariff-related disruptions.",
   "guidance_direction": "not_provided",
   "confidence": "high",
   "extraction_notes": "Operating margin not reported at consolidated level."
@@ -193,11 +197,26 @@ named `{source_pdf_name}_{timestamp}.json`. Example output for a competitor fina
 
 ---
 
+## CLI (batch / scripted use)
+
+```bash
+# process all PDFs in input/
+python pipeline.py
+
+# process specific files
+python pipeline.py input/report_a.pdf input/report_b.pdf
+
+# use a specific document type
+python pipeline.py --type competitor_report input/report.pdf
+```
+
+---
+
 ## Requirements
 
-- Python 3.9+
-- Google GenAI API key (free tier available)
-- See `requirements.txt` for Python dependencies
+- Python 3.12, Node.js (for the frontend)
+- Google Gemini API key (free tier available)
+- See `requirements.txt` / `frontend/package.json` for dependencies
 
 ---
 
