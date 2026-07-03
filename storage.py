@@ -1,6 +1,9 @@
 import json
+import logging
 from pathlib import Path
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def save_to_json(data, output_dir: str = "output", source_filename: str = "") -> str:
@@ -34,5 +37,5 @@ def save_to_json(data, output_dir: str = "output", source_filename: str = "") ->
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"Saved to: {output_path}")
+    logger.info("Saved to: %s", output_path)
     return str(output_path)

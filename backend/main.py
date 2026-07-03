@@ -1,6 +1,9 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routers import documents, schemas, settings
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 app = FastAPI(
     title="Document Intelligence API",
