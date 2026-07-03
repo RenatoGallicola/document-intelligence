@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import JSZip from 'jszip'
 
 interface OutputFile {
   filename: string
@@ -44,13 +45,10 @@ function isSimple(value: unknown): boolean {
 
 // --- field categorization ---
 
-type FieldCategory = 'simple' | 'evidenced' | 'list' | 'meta'
-
-const META_KEYS = new Set(['confidence', 'extraction_notes'])
+type FieldCategory = 'simple' | 'evidenced' | 'list'
 
 function categorize(key: string, value: unknown): FieldCategory | null {
   if (value === null || value === undefined) return null
-  if (META_KEYS.has(key)) return 'meta'
   if (isEvidencedValue(value)) return 'evidenced'
   if (isListOfDicts(value)) return 'list'
   if (isSimple(value)) return 'simple'
@@ -62,20 +60,6 @@ function formatLabel(key: string): string {
 }
 
 // --- sub-components ---
-
-function SignalBadge({ signal }: { signal: string }) {
-  const map: Record<string, { bg: string; color: string; border: string }> = {
-    positive: { bg: '#0d1f12', color: '#4a7c59', border: '#1a3020' },
-    negative: { bg: '#1a0d0d', color: '#c85050', border: '#3a1a1a' },
-    neutral: { bg: '#1a1608', color: '#c8a96e', border: '#3a3020' },
-  }
-  const s = map[signal] || map.neutral
-  return (
-    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-      {signal}
-    </span>
-  )
-}
 
 function ExpandableRow({ item }: { item: Record<string, unknown> }) {
   const [open, setOpen] = useState(false)
@@ -95,16 +79,6 @@ function ExpandableRow({ item }: { item: Record<string, unknown> }) {
           {Object.entries(item).map(([k, v]) => {
             if (v === null || v === undefined) return null
             const label = formatLabel(k)
-
-            // signal field — render badge
-            if (k === 'signal' && typeof v === 'string') {
-              return (
-                <div key={k} style={{ marginBottom: 8 }}>
-                  <div style={monoLabel}>{label}</div>
-                  <SignalBadge signal={v} />
-                </div>
-              )
-            }
 
             // evidenced value inside item
             if (isEvidencedValue(v)) {
@@ -147,6 +121,21 @@ function formatDocumentType(type: string): string {
   return type
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function groupOutputs(items: OutputFile[]): [string, OutputFile[]][] {
+  return Object.entries(
+    items.reduce((acc: Record<string, OutputFile[]>, o) => {
+      const type =
+        typeof o.data?.document_type === 'string' && o.data.document_type
+          ? o.data.document_type
+          : 'unknown'
+
+      if (!acc[type]) acc[type] = []
+      acc[type].push(o)
+      return acc
+    }, {})
+  )
 }
 
 function inferDocumentType(data: Record<string, unknown>): string {
@@ -209,7 +198,7 @@ function TrashIcon() {
 export default function OutputExplorer() {
   const [outputs, setOutputs] = useState<OutputFile[]>([])
   const [selected, setSelected] = useState<OutputFile | null>(null)
-  const [activeTab, setActiveTab] = useState<'fields' | 'lists' | 'meta' | 'raw'>('fields')
+  const [activeTab, setActiveTab] = useState<'fields' | 'lists' | 'raw'>('fields')
   const [loadingList, setLoadingList] = useState(true)
   const [groupByType, setGroupByType] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
@@ -217,10 +206,38 @@ export default function OutputExplorer() {
   const [userSelected, setUserSelected] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [hoverAction, setHoverAction] = useState<'cancel' | 'delete' | null>(null)
+  const [zipping, setZipping] = useState(false)
   
   const visibleOutputs = outputs.filter(o =>
     matchesSearch(o, search)
   )
+
+  const visibleGroups = groupOutputs(visibleOutputs)
+
+  // flattened order actually visible on screen — respects group order and
+  // collapsed groups when GROUP is active, so arrow-key nav matches what's rendered
+  const navOrder = groupByType
+    ? visibleGroups.flatMap(([type, items]) => (openGroups[type] ?? true) ? items : [])
+    : visibleOutputs
+
+  async function handleDownloadAll() {
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      for (const o of outputs) {
+        zip.file(o.filename, JSON.stringify(o.data, null, 2))
+      }
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `outputs_${new Date().toISOString().slice(0, 10)}.zip`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setZipping(false)
+    }
+  }
 
   async function handleDelete(filename: string) {
     await axios.delete(`/api/documents/outputs/${encodeURIComponent(filename)}`)
@@ -302,9 +319,9 @@ export default function OutputExplorer() {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (visibleOutputs.length === 0) return
+      if (navOrder.length === 0) return
 
-      const currentIndex = visibleOutputs.findIndex(
+      const currentIndex = navOrder.findIndex(
         o => o.filename === selected?.filename
       )
 
@@ -313,8 +330,8 @@ export default function OutputExplorer() {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
 
-        const nextIndex = Math.min(currentIndex + 1, visibleOutputs.length - 1)
-        const nextDoc = visibleOutputs[nextIndex]
+        const nextIndex = Math.min(currentIndex + 1, navOrder.length - 1)
+        const nextDoc = navOrder[nextIndex]
 
         if (nextDoc) {
           setSelected(nextDoc)
@@ -326,7 +343,7 @@ export default function OutputExplorer() {
         e.preventDefault()
 
         const prevIndex = Math.max(currentIndex - 1, 0)
-        const prevDoc = visibleOutputs[prevIndex]
+        const prevDoc = navOrder[prevIndex]
 
         if (prevDoc) {
           setSelected(prevDoc)
@@ -337,7 +354,7 @@ export default function OutputExplorer() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [visibleOutputs, selected])
+  }, [navOrder, selected])
 
   useEffect(() => {
     if (deleteTarget) {
@@ -351,21 +368,18 @@ export default function OutputExplorer() {
   const simple: [string, unknown][] = []
   const evidenced: [string, unknown][] = []
   const lists: [string, unknown][] = []
-  const meta: [string, unknown][] = []
 
   for (const [k, v] of Object.entries(data)) {
-    if (k === 'document_type') continue
+    if (k === 'document_type' || k === 'confidence') continue
     const cat = categorize(k, v)
     if (cat === 'simple') simple.push([k, v])
     else if (cat === 'evidenced') evidenced.push([k, v])
     else if (cat === 'list') lists.push([k, v])
-    else if (cat === 'meta') meta.push([k, v])
   }
 
   const tabs = [
     { id: 'fields' as const, label: 'Fields', show: simple.length > 0 || evidenced.length > 0 },
     { id: 'lists' as const, label: 'Lists', show: lists.length > 0 },
-    { id: 'meta' as const, label: 'Metadata', show: meta.length > 0 },
     { id: 'raw' as const, label: 'Raw JSON', show: true },
   ].filter(t => t.show)
 
@@ -373,8 +387,33 @@ export default function OutputExplorer() {
     <>
       <div style={topbarStyle}>
         <div style={{ fontSize: 13, fontWeight: 500, color: '#e8e6e0' }}>Output Explorer</div>
-        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', letterSpacing: '0.05em' }}>
-          {outputs.length} document{outputs.length !== 1 ? 's' : ''}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {outputs.length > 0 && (
+            <button
+              onClick={handleDownloadAll}
+              disabled={zipping}
+              style={{
+                fontSize: 10,
+                fontFamily: 'DM Mono, monospace',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                background: 'none',
+                border: '1px solid #1a1a18',
+                color: zipping ? '#333330' : '#444440',
+                padding: '3px 10px',
+                borderRadius: 2,
+                cursor: zipping ? 'not-allowed' : 'pointer',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => { if (!zipping) (e.currentTarget as HTMLElement).style.color = '#888880' }}
+              onMouseLeave={e => { if (!zipping) (e.currentTarget as HTMLElement).style.color = '#444440' }}
+            >
+              {zipping ? 'Zipping...' : 'Download all'}
+            </button>
+          )}
+          <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#3a3a36', letterSpacing: '0.05em' }}>
+            {outputs.length} document{outputs.length !== 1 ? 's' : ''}
+          </div>
         </div>
       </div>
 
@@ -486,18 +525,7 @@ export default function OutputExplorer() {
             })}
 
             {/* GROUP MODE */}
-            {groupByType && Object.entries(
-              outputs.filter(o => matchesSearch(o, search)).reduce((acc: Record<string, OutputFile[]>, o) => {
-                const type =
-                  typeof o.data?.document_type === 'string' && o.data.document_type
-                    ? o.data.document_type
-                    : 'unknown'
-
-                if (!acc[type]) acc[type] = []
-                acc[type].push(o)
-                return acc
-              }, {})
-            ).map(([type, items]) => {
+            {groupByType && visibleGroups.map(([type, items]) => {
 
               const isOpen = openGroups[type]
 
@@ -607,7 +635,10 @@ export default function OutputExplorer() {
                   </div>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
                     {data.confidence !== undefined && data.confidence !== null && (
-                      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#1a1608', color: '#c8a96e', border: '1px solid #3a3020' }}>
+                      <span
+                        title="Confidence"
+                        style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 2, background: '#1a1608', color: '#c8a96e', border: '1px solid #3a3020', cursor: 'default' }}
+                      >
                         {String(data.confidence)}
                       </span>
                     )}
@@ -714,17 +745,6 @@ export default function OutputExplorer() {
                         {(v as Record<string, unknown>[]).map((item, i) => (
                           <ExpandableRow key={i} item={item} />
                         ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === 'meta' && (
-                  <div>
-                    {meta.map(([k, v]) => (
-                      <div key={k} style={{ marginBottom: 16 }}>
-                        <div style={monoLabel}>{formatLabel(k)}</div>
-                        <div style={{ fontSize: 13, color: '#b8b6b0', lineHeight: 1.6 }}>{String(v)}</div>
                       </div>
                     ))}
                   </div>
