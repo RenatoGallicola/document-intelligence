@@ -11,14 +11,15 @@ OUTPUT_DIR = Path("output")
 
 
 @router.post("/process")
-async def process_document(
+def process_document(
     file: UploadFile = File(...),
     document_type: str = Form(...)
 ):
     INPUT_DIR.mkdir(exist_ok=True)
     OUTPUT_DIR.mkdir(exist_ok=True)
 
-    pdf_path = INPUT_DIR / file.filename
+    safe_name = Path(file.filename).name
+    pdf_path = INPUT_DIR / safe_name
     with open(pdf_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
@@ -44,6 +45,8 @@ async def process_document(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        pdf_path.unlink(missing_ok=True)
 
 
 @router.get("/outputs")
