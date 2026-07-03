@@ -1,12 +1,9 @@
 import os
 import json
 import logging
-import time
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from pathlib import Path
-from schemas.competitor_report import CompetitorReportSchema
 from config import DOCUMENT_TYPES
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from google.genai.errors import ClientError
