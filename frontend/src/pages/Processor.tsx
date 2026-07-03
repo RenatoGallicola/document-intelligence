@@ -21,9 +21,10 @@ interface Props {
   onCompletedFiles: (count: number) => void
   totalFiles: number
   onTotalFiles: (count: number) => void
+  apiKeySet: boolean
 }
 
-export default function Processor({ results, onResults, documentType, onDocumentType, files, onFiles, loading, onLoading, currentFile, onCurrentFile, completedFiles, onCompletedFiles, totalFiles, onTotalFiles }: Props) {
+export default function Processor({ results, onResults, documentType, onDocumentType, files, onFiles, loading, onLoading, currentFile, onCurrentFile, completedFiles, onCompletedFiles, totalFiles, onTotalFiles, apiKeySet }: Props) {
   const { theme } = useTheme()
   const { colors } = theme
   const [error, setError] = useState<string | null>(null)
@@ -95,7 +96,7 @@ export default function Processor({ results, onResults, documentType, onDocument
 
   const noSchemas = schemasLoaded && docTypes.length === 0
   const dropDisabled = loading || noSchemas
-  const extractDisabled = loading || !files.length || noSchemas
+  const extractDisabled = loading || !files.length || noSchemas || !apiKeySet
 
   return (
     <>
@@ -116,6 +117,12 @@ export default function Processor({ results, onResults, documentType, onDocument
       <div style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
 
         <div style={sectionLabel(theme)}>Upload documents</div>
+
+        {!apiKeySet && (
+          <div style={{ ...statusBadge(theme, 'error'), borderRadius: radius.md, padding: '10px 14px', marginBottom: 12, fontFamily: font.mono, fontSize: fontSize.sm }}>
+            Gemini API key not configured. Add one in Settings before extracting.
+          </div>
+        )}
 
         {noSchemas && (
           <div style={{ ...statusBadge(theme, 'warning'), borderRadius: radius.md, padding: '10px 14px', marginBottom: 12, fontFamily: font.mono, fontSize: fontSize.sm }}>
