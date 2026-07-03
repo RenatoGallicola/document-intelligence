@@ -1,3 +1,6 @@
+import { useTheme } from '../theme/useTheme'
+import { font, fontSize, letterSpacing, transitions } from '../theme/tokens'
+
 interface Props {
   loading: boolean
   currentFile: string
@@ -6,6 +9,9 @@ interface Props {
 }
 
 export default function ProgressBar({ loading, currentFile, totalFiles, completedFiles }: Props) {
+  const { theme } = useTheme()
+  const { colors } = theme
+
   if (!loading) return null
 
   const isIndeterminate = totalFiles === 1
@@ -14,12 +20,12 @@ export default function ProgressBar({ loading, currentFile, totalFiles, complete
   return (
     <div style={{
       position: 'relative',
-      borderBottom: '1px solid #1a1a18',
+      borderBottom: `1px solid ${colors.border.default}`,
     }}>
       {/* track */}
       <div style={{
         height: 2,
-        background: '#1a1a18',
+        background: colors.border.default,
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -37,7 +43,7 @@ export default function ProgressBar({ loading, currentFile, totalFiles, complete
               left: 0,
               height: '100%',
               width: '25%',
-              background: '#c8a96e',
+              background: colors.accent.default,
               animation: 'indeterminate 1.4s ease-in-out infinite',
             }} />
           </>
@@ -48,8 +54,8 @@ export default function ProgressBar({ loading, currentFile, totalFiles, complete
             left: 0,
             height: '100%',
             width: `${progress}%`,
-            background: '#c8a96e',
-            transition: 'width 0.4s ease',
+            background: colors.accent.default,
+            transition: transitions.widthSlow,
           }} />
         )}
       </div>
@@ -60,13 +66,13 @@ export default function ProgressBar({ loading, currentFile, totalFiles, complete
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '6px 28px',
-        background: '#0d0d0b',
+        background: colors.bg.surface,
       }}>
         <div style={{
-          fontFamily: 'DM Mono, monospace',
-          fontSize: 11,
-          color: '#555550',
-          letterSpacing: '0.05em',
+          fontFamily: font.mono,
+          fontSize: fontSize.sm,
+          color: colors.text.midGray,
+          letterSpacing: letterSpacing.wide1,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -76,10 +82,10 @@ export default function ProgressBar({ loading, currentFile, totalFiles, complete
         </div>
         {totalFiles > 1 && (
           <div style={{
-            fontFamily: 'DM Mono, monospace',
-            fontSize: 11,
-            color: '#444440',
-            letterSpacing: '0.05em',
+            fontFamily: font.mono,
+            fontSize: fontSize.sm,
+            color: colors.text.secondary,
+            letterSpacing: letterSpacing.wide1,
             flexShrink: 0,
           }}>
             {completedFiles} / {totalFiles}
