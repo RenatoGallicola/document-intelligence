@@ -31,7 +31,7 @@ function isSimple(value: unknown): boolean {
 
 type FieldCategory = 'simple' | 'evidenced' | 'list'
 
-function categorize(key: string, value: unknown): FieldCategory | null {
+function categorize(value: unknown): FieldCategory | null {
   if (value === null || value === undefined) return null
   if (isEvidencedValue(value)) return 'evidenced'
   if (isListOfDicts(value)) return 'list'
@@ -349,7 +349,7 @@ export default function OutputExplorer() {
 
   for (const [k, v] of Object.entries(data)) {
     if (k === 'document_type' || k === 'confidence') continue
-    const cat = categorize(k, v)
+    const cat = categorize(v)
     if (cat === 'simple') simple.push([k, v])
     else if (cat === 'evidenced') evidenced.push([k, v])
     else if (cat === 'list') lists.push([k, v])
