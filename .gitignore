@@ -1,3 +1,6 @@
+# Node (root-level — frontend/ has its own .gitignore for its node_modules)
+node_modules/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
