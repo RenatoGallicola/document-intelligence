@@ -1,5 +1,5 @@
 COMPETITOR_REPORT_INSTRUCTIONS = """
-Domain rules for competitor financial reports (Example Corp competitive intelligence):
+Domain rules for competitor financial reports in the professional power tools / construction equipment industry:
 
 NUMERIC CONVENTIONS
 - Revenue: extract in millions, in the currency stated in report_currency
@@ -73,7 +73,7 @@ ORDER DYNAMICS
 - order_intake is a 1-2 quarter leading indicator of future revenue — capture it carefully.
 
 TOOLS SEGMENT MAPPING
-- Map the segment most comparable to Example Corp's business to tools_segment_*.
+- Map the segment most comparable to the reference company's core business to tools_segment_*.
 - If the exact division is not separately reported, apply the proxy rule above.
 - Record the exact name (or proxy name) in tools_segment_name.
 
@@ -82,7 +82,7 @@ PROFESSIONAL vs. DIY
 - professional_vs_diy_mix: include any stated percentage or qualitative description of the split.
 
 REGIONAL BREAKDOWN
-- Use the company's own regional names — do not translate to Example Corp regions.
+- Use the company's own regional names — do not translate to your organization's internal regional structure.
 - Include revenue and growth for each region if disclosed.
 - signal: infer from growth data — positive if organic growth > 0, negative if < 0, neutral if flat or mixed.
 - If only qualitative commentary exists for a region (no numbers), still create a RegionalData entry
