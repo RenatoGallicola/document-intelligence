@@ -1,1 +1,78 @@
-{}
+{
+  "invoice": {
+    "display_name": "Invoice",
+    "class_name": "InvoiceSchema",
+    "fields": [
+      {
+        "name": "vendor_name",
+        "type": "str",
+        "description": "Name of the company or person issuing the invoice",
+        "is_list": true,
+        "fields": []
+      },
+      {
+        "name": "invoice_number",
+        "type": "str",
+        "description": "Invoice or reference number",
+        "is_list": true,
+        "fields": []
+      },
+      {
+        "name": "invoice_date",
+        "type": "str",
+        "description": "Date the invoice was issued, ISO format if possible",
+        "is_list": true,
+        "fields": []
+      },
+      {
+        "name": "due_date",
+        "type": "str",
+        "description": "Payment due date, ISO format if possible",
+        "is_list": true,
+        "fields": []
+      },
+      {
+        "name": "currency",
+        "type": "str",
+        "description": "Currency code used on the invoice, e.g. USD, EUR",
+        "is_list": true,
+        "fields": []
+      },
+      {
+        "name": "total_amount",
+        "type": "EvidencedValue",
+        "description": "Total amount due including tax",
+        "is_list": true,
+        "fields": []
+      },
+      {
+        "name": "line_items",
+        "type": "nested",
+        "description": "Individual line items billed on the invoice",
+        "is_list": true,
+        "fields": [
+          {
+            "name": "description",
+            "type": "str",
+            "description": "Description of the product or service billed"
+          },
+          {
+            "name": "quantity",
+            "type": "float",
+            "description": "Quantity billed"
+          },
+          {
+            "name": "unit_price",
+            "type": "EvidencedValue",
+            "description": "Price per unit"
+          },
+          {
+            "name": "amount",
+            "type": "EvidencedValue",
+            "description": "Line total (quantity x unit price)"
+          }
+        ]
+      }
+    ]
+  }
+}
