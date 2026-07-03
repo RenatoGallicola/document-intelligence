@@ -8,6 +8,16 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var t = localStorage.getItem('di-theme');
+        if (t === 'light') {
+          document.documentElement.style.setProperty('--color-bg', '#faf8f4');
+          document.documentElement.style.setProperty('--color-text', '#1a1815');
+          document.documentElement.style.setProperty('--color-scrollbar-thumb', '#cfc8b6');
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

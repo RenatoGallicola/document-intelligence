@@ -8,8 +8,8 @@
 
 body {
   margin: 0;
-  background: #0a0a0a;
-  color: #e8e6e0;
+  background: var(--color-bg, #0a0a0a);
+  color: var(--color-text, #e8e6e0);
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   line-height: 1.5;
@@ -25,10 +25,6 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a26;
+  background: var(--color-scrollbar-thumb, #2a2a26);
   border-radius: 2px;
-}
-
-.mono {
-  font-family: 'DM Mono', monospace;
 }
