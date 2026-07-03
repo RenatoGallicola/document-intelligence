@@ -33,9 +33,13 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ProcessResult[]>([])
   const [model, setModel] = useState('gemini-3.5-flash')
+  const [apiKeySet, setApiKeySet] = useState(false)
 
   useEffect(() => {
-    axios.get('/api/settings').then(res => setModel(res.data.model))
+    axios.get('/api/settings').then(res => {
+      setModel(res.data.model)
+      setApiKeySet(res.data.api_key_set)
+    })
   }, [])
 
   const renderPage = () => {
@@ -60,13 +64,13 @@ export default function App() {
       )
       case 'explorer': return <OutputExplorer />
       case 'schemas': return <SchemaManager />
-      case 'settings': return <Settings model={model} onModel={setModel} />
+      case 'settings': return <Settings model={model} onModel={setModel} apiKeySet={apiKeySet} onApiKeySet={setApiKeySet} />
     }
   }
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: theme.colors.bg.base }}>
-      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} model={model} />
+      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} model={model} apiKeySet={apiKeySet} />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme.colors.bg.surface }}>
         {renderPage()}
       </main>

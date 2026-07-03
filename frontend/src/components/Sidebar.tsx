@@ -7,6 +7,15 @@ interface Props {
   currentPage: Page
   onNavigate: (page: Page) => void
   model: string
+  apiKeySet: boolean
+}
+
+function SparkleIcon({ color }: { color: string }) {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}>
+      <path d="M12 3 Q13 10 20 12 Q13 14 12 21 Q11 14 4 12 Q11 10 12 3 Z" />
+    </svg>
+  )
 }
 
 const navItems: { id: Page; label: string; section: string }[] = [
@@ -16,7 +25,7 @@ const navItems: { id: Page; label: string; section: string }[] = [
   { id: 'settings', label: 'Settings', section: 'Configure' },
 ]
 
-export default function Sidebar({ currentPage, onNavigate, model }: Props) {
+export default function Sidebar({ currentPage, onNavigate, model, apiKeySet }: Props) {
   const { theme } = useTheme()
   const { colors } = theme
   const sections = [...new Set(navItems.map(i => i.section))]
@@ -97,7 +106,7 @@ export default function Sidebar({ currentPage, onNavigate, model }: Props) {
 
       <div style={{ padding: '16px 20px', borderTop: `1px solid ${colors.border.default}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.secondary, letterSpacing: letterSpacing.wide1 }}>
-          <div style={{ width: 5, height: 5, borderRadius: radius.full, background: colors.status.success.text, flexShrink: 0 }} />
+          <SparkleIcon color={apiKeySet ? colors.status.success.text : colors.status.error.text} />
           {model}
         </div>
       </div>

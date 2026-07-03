@@ -8,6 +8,8 @@ import { topbarStyle, fieldLabel, inputStyle, statusBadge, cardStyle } from '../
 interface Props {
   model: string
   onModel: (model: string) => void
+  apiKeySet: boolean
+  onApiKeySet: (apiKeySet: boolean) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -103,11 +105,10 @@ function ThemeSwatchButton({ name, active, onClick }: { name: ThemeName; active:
   )
 }
 
-export default function Settings({ model, onModel }: Props) {
+export default function Settings({ model, onModel, apiKeySet, onApiKeySet }: Props) {
   const { theme, themeName, setTheme } = useTheme()
   const { colors } = theme
   const [apiKeyPreview, setApiKeyPreview] = useState('loading...')
-  const [apiKeySet, setApiKeySet] = useState(false)
   const [newApiKey, setNewApiKey] = useState('')
   const [models, setModels] = useState<string[]>([])
   const [selectedModel, setSelectedModel] = useState(model)
@@ -120,7 +121,7 @@ export default function Settings({ model, onModel }: Props) {
   useEffect(() => {
     axios.get('/api/settings').then(res => {
       setApiKeyPreview(res.data.api_key_preview)
-      setApiKeySet(res.data.api_key_set)
+      onApiKeySet(res.data.api_key_set)
       setSelectedModel(res.data.model)
     })
   }, [])
@@ -145,7 +146,7 @@ export default function Settings({ model, onModel }: Props) {
     try {
       await axios.post('/api/settings/api-key', { api_key: newApiKey.trim() })
       setApiKeyPreview(`${newApiKey.trim().slice(0, 8)}...${newApiKey.trim().slice(-4)}`)
-      setApiKeySet(true)
+      onApiKeySet(true)
       setNewApiKey('')
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
