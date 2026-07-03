@@ -120,7 +120,7 @@ def extract_from_document(pdf_path: str, document_type: str):
 
     config = DOCUMENT_TYPES[document_type]
     prompt = config["prompt"]
-    model_name = config["model"]
+    model_name = os.getenv("DEFAULT_MODEL", "gemini-3.5-flash")
 
     if prompt is None:
         raise NotImplementedError(f"Prompt not yet defined for document type: {document_type}")

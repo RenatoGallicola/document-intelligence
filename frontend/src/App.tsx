@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import Sidebar from './components/Sidebar'
 import Processor from './pages/Processor'
 import OutputExplorer from './pages/OutputExplorer'
@@ -27,8 +28,13 @@ export default function App() {
   const [currentFile, setCurrentFile] = useState<string>('')
   const [completedFiles, setCompletedFiles] = useState(0)
   const [totalFiles, setTotalFiles] = useState(0)
-  const [loading, setLoading] = useState(false) 
+  const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ProcessResult[]>([])
+  const [model, setModel] = useState('gemini-3.5-flash')
+
+  useEffect(() => {
+    axios.get('/api/settings').then(res => setModel(res.data.model))
+  }, [])
 
   const renderPage = () => {
     switch (currentPage) {
@@ -52,13 +58,13 @@ export default function App() {
       )
       case 'explorer': return <OutputExplorer />
       case 'schemas': return <SchemaManager />
-      case 'settings': return <Settings />
+      case 'settings': return <Settings model={model} onModel={setModel} />
     }
   }
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#0a0a0a' }}>
-      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
+      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} model={model} />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0d0d0b' }}>
         {renderPage()}
       </main>
