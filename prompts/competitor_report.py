@@ -33,8 +33,6 @@ Where to look (check all of these):
 Accepted labels — ANY of the following qualifies as organic growth:
   "organic growth", "organic revenue growth", "organic sales growth",
   "like-for-like growth", "LFL growth", "comparable growth", "comparable-store growth",
-  "constant-currency growth", "at constant exchange rates", "at constant currencies",
-  "in local currencies", "local currency growth", "local currency terms",
   "autonomous growth", "underlying growth", "underlying revenue growth",
   "revenue development excluding exchange rate effects",
   "revenue development excluding exchange rate effects and portfolio changes",
@@ -42,6 +40,13 @@ Accepted labels — ANY of the following qualifies as organic growth:
   "adjusted for acquisitions and currency", "organic volume + price combined"
 
 Do NOT leave null if any of the above labels appears anywhere in the document.
+
+CONSTANT-CURRENCY IS NOT ORGANIC -- populate the separate field instead
+  Phrasing such as "in local currencies", "local currency growth", "at constant exchange
+  rates", "at constant currencies", "constant-currency growth" excludes FX but STILL
+  INCLUDES acquisitions and divestitures. It is NOT organic growth.
+  -> put these in total_revenue_local_currency_growth_pct, never in the organic field.
+  If a report states both, extract both into their own fields.
 
 PROXY AND FALLBACK VALUES — OPERATING MARGIN
 - operating_margin_pct: prefer GAAP EBIT / revenue (also labeled "operating income margin",
