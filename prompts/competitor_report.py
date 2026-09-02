@@ -30,7 +30,7 @@ Where to look (check all of these):
 5. Segment-level discussion: organic may appear per segment even if total is not separately stated
 6. Footnotes or supplemental tables at the back of the annual report
 
-Accepted labels. ANY of the following qualifies as organic growth:
+ANY of the following labels qualifies as organic growth:
   "organic growth", "organic revenue growth", "organic sales growth",
   "like-for-like growth", "LFL growth", "comparable growth", "comparable-store growth",
   "autonomous growth", "underlying growth", "underlying revenue growth",

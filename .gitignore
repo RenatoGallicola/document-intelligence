@@ -1,4 +1,4 @@
-# Node (root-level; frontend/ has its own .gitignore for its node_modules)
+# Node at the repo root. frontend/ has its own .gitignore for its node_modules
 node_modules/
 
 # Private, machine-local project context, never shared/committed

@@ -4,7 +4,7 @@ import json
 def build_prompt(schema_class, domain_instructions: str = "") -> str:
     """
     Build an extraction prompt for any schema.
-    Generic base prompt; domain-specific rules are passed via domain_instructions.
+    The base prompt is generic; domain-specific rules are passed via domain_instructions.
     """
     schema = schema_class.model_json_schema()
     schema_str = json.dumps(schema, indent=2)
