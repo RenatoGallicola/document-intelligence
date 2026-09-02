@@ -28,6 +28,10 @@ def get_settings():
 @router.post("/api-key")
 def update_api_key(body: APIKeyUpdate):
     set_key(str(ENV_PATH), "GEMINI_API_KEY", body.api_key)
+    # set_key only writes the file. Without this the running process keeps the
+    # old value, so GET /settings would still report the key as unset right
+    # after saving it, and the extractor would keep using the previous key.
+    os.environ["GEMINI_API_KEY"] = body.api_key
     return {"success": True}
 
 
