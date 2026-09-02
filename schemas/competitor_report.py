@@ -77,6 +77,7 @@ class CompetitorReportSchema(BaseModel):
     total_revenue: Optional[EvidencedValue] = Field(None, description="Total company revenue in millions")
     total_revenue_yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="Reported total revenue YoY growth as decimal, including FX and M&A effects")
     total_revenue_organic_growth_pct: Optional[EvidencedValue] = Field(None, description="Organic revenue growth as decimal, excluding FX translation and M&A. Only extract if explicitly stated — do not calculate.")
+    total_revenue_local_currency_growth_pct: Optional[EvidencedValue] = Field(None, description="Revenue growth at constant exchange rates / in local currencies as decimal. Excludes FX but INCLUDES M&A - this is NOT organic growth. Only extract if explicitly stated.")
     fx_impact_pct: Optional[EvidencedValue] = Field(None, description="FX translation impact on revenue growth as decimal (negative = headwind, e.g. -0.03 = -3pp drag)")
     m_and_a_impact_pct: Optional[EvidencedValue] = Field(None, description="M&A contribution to revenue growth as decimal (positive = acquired growth, negative = divested revenue). Excludes FX and organic. Only extract if explicitly stated.")
     gross_margin_pct: Optional[EvidencedValue] = Field(None, description="Gross margin as decimal")
