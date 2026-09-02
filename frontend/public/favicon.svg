@@ -1,6 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#0a0a0a"/>
-  <path d="M9 6H17L23 12V26H9Z" fill="#c8a96e"/>
-  <path d="M17 6L23 12H17Z" fill="#0a0a0a" opacity="0.35"/>
-  <path d="M16 13.5Q16.5 17 20 18Q16.5 19 16 22.5Q15.5 19 12 18Q15.5 17 16 13.5Z" fill="#0a0a0a"/>
+  <defs>
+    <!-- Page face: lighter at the top, deeper towards the bottom. -->
+    <linearGradient id="page" x1="0" y1="6" x2="0" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e2c898"/>
+      <stop offset="1" stop-color="#a88a54"/>
+    </linearGradient>
+    <!-- Shadow the turned corner casts on the page, fading along the fold. -->
+    <linearGradient id="foldShadow" x1="23" y1="6" x2="19.2" y2="9.8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Keeps the fold shadow on the sheet instead of spilling onto the background. -->
+    <clipPath id="pageClip">
+      <path d="M9 6H17L23 12V26H9Z"/>
+    </clipPath>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="0.7"/>
+    </filter>
+    <filter id="edge" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="0.13"/>
+    </filter>
+    <path id="sheet" d="M9 6H17L23 12V26H9Z"/>
+    <path id="spark" d="M16 13.5Q16.64 17.28 20 18Q16.64 18.72 16 22.5Q15.36 18.72 12 18Q15.36 17.28 16 13.5Z"/>
+  </defs>
+
+  <!-- status.warning.bg from the dark palette: the same ground the app already
+       puts this gold on, in its warning badges. -->
+  <rect width="32" height="32" rx="7" fill="#1a1608"/>
+
+  <!-- The sheet sits above the ground, so it casts a shadow away from the light. -->
+  <use href="#sheet" transform="translate(-0.5 0.6)" fill="#000000" opacity="0.59" filter="url(#soft)"/>
+
+  <use href="#sheet" fill="url(#page)"/>
+  <path d="M15.4 6H23V13.6Z" fill="url(#foldShadow)" clip-path="url(#pageClip)"/>
+  <!-- The turned corner shows the back of the sheet, so it is lighter than the
+       face, not darker. -->
+  <path d="M17 6L23 12H17Z" fill="#e8d5b0"/>
+
+  <!-- The spark is a hole cut through the sheet, so it has two edges. Light
+       comes from the upper right, the direction the fold's shadow implies: the
+       far rim falls into shade, the near rim catches the light on the paper's
+       cut thickness. Three copies of one path, the last being the hole itself. -->
+  <g clip-path="url(#pageClip)">
+    <use href="#spark" transform="translate(0.20 -0.21)" fill="#000000" opacity="0.59" filter="url(#edge)"/>
+    <use href="#spark" transform="translate(-0.16 0.17)" fill="#f4e6ca" opacity="0.92" filter="url(#edge)"/>
+  </g>
+  <use href="#spark" fill="#1a1608"/>
 </svg>
