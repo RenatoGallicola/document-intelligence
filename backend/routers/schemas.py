@@ -252,7 +252,7 @@ def _update_config(req: SchemaCreateRequest) -> None:
         # Insert right after the last import/from line (before the blank lines before DOCUMENT_TYPES)
         lines = content.split("\n")
         doc_types_line = next(
-            (i for i, l in enumerate(lines) if l.startswith("DOCUMENT_TYPES")), len(lines)
+            (i for i, line in enumerate(lines) if line.startswith("DOCUMENT_TYPES")), len(lines)
         )
         last_import = -1
         for i in range(doc_types_line - 1, -1, -1):
@@ -272,7 +272,6 @@ def _update_config(req: SchemaCreateRequest) -> None:
             f'    "{name}": {{\n'
             f'        "schema": {class_name},\n'
             f'        "prompt": build_prompt({class_name}, {instructions_var}),\n'
-            f'        "storage_table": "{name}",\n'
             f'    }},\n'
         )
         # find the closing } of DOCUMENT_TYPES by tracking brace depth
@@ -356,7 +355,7 @@ def _remove_from_config(name: str, class_name: str) -> None:
     lines = content.split("\n")
     schema_import = f"from schemas.{name} import {class_name}"
     prompt_import = f"from prompts.{name} import {instructions_var}"
-    lines = [l for l in lines if l.strip() not in (schema_import, prompt_import)]
+    lines = [line for line in lines if line.strip() not in (schema_import, prompt_import)]
     content = "\n".join(lines)
 
 

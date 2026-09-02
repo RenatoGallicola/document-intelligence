@@ -9,11 +9,9 @@ DOCUMENT_TYPES = {
     "competitor_report": {
         "schema": CompetitorReportSchema,
         "prompt": build_prompt(CompetitorReportSchema, COMPETITOR_REPORT_INSTRUCTIONS),
-        "storage_table": "competitor_signals",
     },
     "invoice": {
         "schema": InvoiceSchema,
         "prompt": build_prompt(InvoiceSchema, INVOICE_INSTRUCTIONS),
-        "storage_table": "invoice",
     },
 }
