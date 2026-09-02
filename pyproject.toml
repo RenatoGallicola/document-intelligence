@@ -1,0 +1,15 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 110
+extend-exclude = [".venv", "frontend", "analysis", "input", "output"]
+
+[tool.ruff.lint]
+# Pyflakes plus the pycodestyle errors that catch real mistakes. Deliberately
+# not the stylistic rulesets: `schemas/` uses Optional[...] because that is
+# exactly what Schema Manager generates, and a linter rewriting it to `X | None`
+# would put hand-written and generated schemas permanently out of step.
+select = ["E4", "E7", "E9", "F"]
