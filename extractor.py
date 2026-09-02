@@ -82,7 +82,7 @@ def call_gemini(pdf_bytes: bytes, prompt: str, model_name: str) -> str:
         config={"temperature": 0, "max_output_tokens": 16000}
     )
     if response.text is None:
-        raise ValueError("Gemini returned no text content (likely a transient function_call response — retrying)")
+        raise ValueError("Gemini returned no text content (likely a transient function_call response, retrying)")
     return response.text
 
 

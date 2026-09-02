@@ -25,7 +25,7 @@ def process_document(pdf_path: str, document_type: str, output_dir: str = "outpu
     logger.info("Document type: %s", document_type)
     logger.info("=" * 60)
 
-    # step 1 — extract
+    # step 1: extract
     try:
         validated = extract_from_document(pdf_path, document_type)
     except Exception as e:
@@ -37,7 +37,7 @@ def process_document(pdf_path: str, document_type: str, output_dir: str = "outpu
             "errors": [str(e)],
         }
 
-    # step 2 — validate and summarize
+    # step 2: validate and summarize
     _, errors = validate_extraction(validated.model_dump(), document_type)
     summary = summarize_extraction(validated)
 
@@ -48,7 +48,7 @@ def process_document(pdf_path: str, document_type: str, output_dir: str = "outpu
     if summary["missing_fields"]:
         logger.info("  Missing          : %s", ', '.join(summary['missing_fields']))
 
-    # step 3 — save
+    # step 3: save
     result_data = validated.model_dump()
     result_data["document_type"] = document_type
 

@@ -1,7 +1,7 @@
-# Node (root-level — frontend/ has its own .gitignore for its node_modules)
+# Node (root-level; frontend/ has its own .gitignore for its node_modules)
 node_modules/
 
-# Private, machine-local project context — never shared/committed
+# Private, machine-local project context, never shared/committed
 CLAUDE.local.md
 CLAUDE.md
 

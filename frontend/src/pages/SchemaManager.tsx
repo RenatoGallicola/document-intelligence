@@ -145,7 +145,7 @@ function generatePreview(displayName: string, fields: FormField[]): string {
     lines.push(previewFieldLine(f.name || 'field', f.type, f.description, f.is_list))
   })
 
-  // every schema implicitly supports these — mirrors backend/routers/schemas.py
+  // every schema implicitly supports these: mirrors backend/routers/schemas.py
   const existingNames = new Set(fields.map(f => f.name))
   if (!existingNames.has('confidence')) {
     lines.push(previewFieldLine('confidence', 'str', 'Extraction confidence: high, medium, or low', true))
@@ -351,7 +351,7 @@ export default function SchemaManager() {
       const detail = res.data
       setSelected(detail)
       setDisplayName(detail.display_name || toDisplayName(detail.id))
-      // managed_fields come from registry — they match FormField shape
+      // managed_fields come from registry; they match FormField shape
       const mf = (detail.managed_fields || []) as FormField[]
       setFormFields(mf.map(f => ({ ...f, id: uid(), fields: (f.fields || []).map(nf => ({ ...nf, id: uid() })) })))
       setMode('edit')
@@ -440,7 +440,7 @@ export default function SchemaManager() {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
         {/* ---------------------------------------------------------------- */}
-        {/* Left panel — schema list                                          */}
+        {/* Left panel: schema list                                          */}
         {/* ---------------------------------------------------------------- */}
         <div style={{ width: 220, minWidth: 220, borderRight: `1px solid ${colors.border.default}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -555,7 +555,7 @@ export default function SchemaManager() {
                 This schema is defined in Python. Edit <code style={{ color: colors.text.readable }}>schemas/{selected.id}.py</code> directly.
               </div>
 
-              <div style={sectionLabel(theme)}>Fields — {selected.field_count}</div>
+              <div style={sectionLabel(theme)}>Fields ({selected.field_count})</div>
               {selected.fields.map(f => (
                 <div key={f.name} style={{ display: 'flex', gap: 12, padding: '8px 12px', background: colors.bg.surface, border: `1px solid ${colors.border.default}`, borderRadius: radius.md, marginBottom: 4 }}>
                   <div style={{ fontFamily: font.mono, fontSize: fontSize.sm, color: colors.text.tertiary, minWidth: 160 }}>{f.name}</div>
@@ -599,10 +599,10 @@ export default function SchemaManager() {
               {/* Fields */}
               <div style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <div style={{ ...sectionLabel(theme), marginBottom: 0 }}>Fields — {formFields.length}</div>
+                  <div style={{ ...sectionLabel(theme), marginBottom: 0 }}>Fields ({formFields.length})</div>
                 </div>
                 <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.quaternary, marginBottom: 10 }}>
-                  + confidence, extraction_notes — added automatically to every schema
+                  confidence and extraction_notes are added automatically to every schema
                 </div>
 
                 {/* column headers */}

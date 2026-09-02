@@ -192,7 +192,7 @@ export default function OutputExplorer() {
 
   const visibleGroups = groupOutputs(visibleOutputs)
 
-  // flattened order actually visible on screen — respects group order and
+  // flattened order actually visible on screen; respects group order and
   // collapsed groups when GROUP is active, so arrow-key nav matches what's rendered
   const navOrder = groupByType
     ? visibleGroups.flatMap(([type, items]) => (openGroups[type] ?? true) ? items : [])

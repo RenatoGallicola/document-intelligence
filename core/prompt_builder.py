@@ -4,7 +4,7 @@ import json
 def build_prompt(schema_class, domain_instructions: str = "") -> str:
     """
     Build an extraction prompt for any schema.
-    Generic base prompt — domain-specific rules are passed via domain_instructions.
+    Generic base prompt; domain-specific rules are passed via domain_instructions.
     """
     schema = schema_class.model_json_schema()
     schema_str = json.dumps(schema, indent=2)
@@ -12,9 +12,9 @@ def build_prompt(schema_class, domain_instructions: str = "") -> str:
     return f"""
 You are an intelligent document analysis assistant.
 Extract information from the document and return a JSON object that strictly follows the schema below.
-Use EXACTLY the field names defined in the schema — no variations, no synonyms.
+Use EXACTLY the field names defined in the schema. No variations, no synonyms.
 If a field is not present or cannot be reliably inferred, return null for that field.
-Do not invent or estimate values — only extract what is explicitly stated or clearly implied.
+Do not invent or estimate values. Only extract what is explicitly stated or clearly implied.
 
 General rules:
 - confidence:
