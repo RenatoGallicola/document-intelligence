@@ -223,7 +223,7 @@ export default function Sidebar({ currentPage, onNavigate, model, apiKeySet }: P
         borderTop: `1px solid ${colors.border.default}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: font.mono, fontSize: fontSize.xs, color: colors.text.secondary, letterSpacing: letterSpacing.wide1 }} title={collapsed ? model : undefined}>
-          <span title={`Gemini API — ${apiKeySet ? 'configured' : 'not configured'}`} style={{ display: 'flex' }}>
+          <span title={`Gemini API: ${apiKeySet ? 'configured' : 'not configured'}`} style={{ display: 'flex' }}>
             <SparkleIcon color={apiKeySet ? colors.status.success.text : colors.status.error.text} />
           </span>
           {!collapsed && model}

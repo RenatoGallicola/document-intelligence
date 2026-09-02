@@ -13,7 +13,7 @@ interface Props {
 }
 
 // ---------------------------------------------------------------------------
-// Icons — thin stroke, matches upload/trash icon style used elsewhere
+// Icons: thin stroke, matches upload/trash icon style used elsewhere
 // ---------------------------------------------------------------------------
 
 function AppearanceIcon() {

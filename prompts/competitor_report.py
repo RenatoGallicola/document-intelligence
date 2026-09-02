@@ -15,22 +15,22 @@ PROXY AND FALLBACK VALUES
 - tools_segment_*: if the exact division is not separately disclosed (e.g. it is nested inside a
   larger reporting segment), use the parent segment as a proxy. Set tools_segment_name to
   "<ParentSegmentName> (proxy for <ActualDivisionName>)" and explain the proxy in extraction_notes.
-- Exception — *_organic_growth_pct: NEVER calculate or infer. Only populate if explicitly stated.
+- Exception for *_organic_growth_pct: NEVER calculate or infer. Only populate if explicitly stated.
   See ORGANIC GROWTH section below for full search guidance.
 
-ORGANIC GROWTH — SEARCH GUIDANCE
+ORGANIC GROWTH: SEARCH GUIDANCE
 Organic growth is the single most important field. Scan the ENTIRE document before leaving it null.
 
 Where to look (check all of these):
 1. Financial Highlights table or KPI scorecard (typically first 5-15 pages)
-2. CEO / Chairman / Management Board letter — often quotes organic growth in narrative
-3. Revenue bridge or waterfall table/chart — shows Reported | FX effect | M&A/Portfolio effect | Organic
-   The "organic" bar or row in a revenue bridge IS the organic growth — extract it directly.
+2. CEO / Chairman / Management Board letter: often quotes organic growth in narrative
+3. Revenue bridge or waterfall table/chart: shows Reported | FX effect | M&A/Portfolio effect | Organic
+   The "organic" bar or row in a revenue bridge IS the organic growth; extract it directly.
 4. MD&A / Group Management Report, section on revenue or sales performance
-5. Segment-level discussion — organic may appear per segment even if total is not separately stated
+5. Segment-level discussion: organic may appear per segment even if total is not separately stated
 6. Footnotes or supplemental tables at the back of the annual report
 
-Accepted labels — ANY of the following qualifies as organic growth:
+Accepted labels. ANY of the following qualifies as organic growth:
   "organic growth", "organic revenue growth", "organic sales growth",
   "like-for-like growth", "LFL growth", "comparable growth", "comparable-store growth",
   "autonomous growth", "underlying growth", "underlying revenue growth",
@@ -48,7 +48,7 @@ CONSTANT-CURRENCY IS NOT ORGANIC -- populate the separate field instead
   -> put these in total_revenue_local_currency_growth_pct, never in the organic field.
   If a report states both, extract both into their own fields.
 
-PROXY AND FALLBACK VALUES — OPERATING MARGIN
+PROXY AND FALLBACK VALUES: OPERATING MARGIN
 - operating_margin_pct: prefer GAAP EBIT / revenue (also labeled "operating income margin",
   "EBIT margin", "return on sales", "earnings from operations as % of revenue").
 - If GAAP operating income is heavily distorted by non-recurring items (impairment charges,
@@ -57,7 +57,7 @@ PROXY AND FALLBACK VALUES — OPERATING MARGIN
   Accepted adjusted labels: "adjusted EBIT margin", "adjusted operating margin",
   "EBITA margin", "underlying operating margin", "normalized operating margin".
   Always note in evidence which measure was used (e.g. "adjusted EBIT margin").
-- Do NOT leave null if any operating margin figure exists — use the closest available and
+- Do NOT leave null if any operating margin figure exists; use the closest available and
   explain in extraction_notes.
 
 FX IMPACT
@@ -69,18 +69,18 @@ M&A IMPACT
 - m_and_a_impact_pct: look for "acquisition contribution of X%", "M&A impact of X pp",
   "portfolio changes added/removed X pp from growth", or similar phrasing.
 - Positive = inorganic growth from acquisitions. Negative = revenue lost from divestitures.
-- Only extract if explicitly stated — do not calculate from reported minus organic minus FX.
+- Only extract if explicitly stated; do not calculate from reported minus organic minus FX.
 
 ORDER DYNAMICS
 - order_intake_mln / order_backlog_mln: extract only for companies that report an order book
   (e.g. Atlas Copco, industrial equipment companies). Leave null for distribution-model companies
   like SBD, Makita, or Bosch that do not report order intake as a metric.
-- order_intake is a 1-2 quarter leading indicator of future revenue — capture it carefully.
+- order_intake is a 1-2 quarter leading indicator of future revenue; capture it carefully.
 
 TOOLS SEGMENT MAPPING
 - Map the segment most comparable to the reference company's core business (professional power tools,
   anchors, fastening, measuring systems) to tools_segment_*.
-  Reference mappings (use as a guide, not as fixed rules — company structures change over time):
+  Reference mappings (use as a guide, not as fixed rules, since company structures change over time):
     Stanley Black & Decker → "Tools & Outdoor" (or successor segment post-restructuring)
     TTI / Milwaukee → "Power Equipment" or full company (TTI is tools-only)
     Makita → full company (tools-only company)
@@ -92,14 +92,14 @@ TOOLS SEGMENT MAPPING
 
 PROFESSIONAL vs. DIY
 - professional_revenue: only populate if the company separately discloses professional-end revenue.
-  SBD splits "Professional" and "Consumer" within Tools & Outdoor — use Professional sub-segment.
+  SBD splits "Professional" and "Consumer" within Tools & Outdoor; use Professional sub-segment.
   TTI does not split; leave null.
 - professional_vs_diy_mix: include any stated percentage or qualitative description of the split.
 
 REGIONAL BREAKDOWN
-- Use the company's own regional names — do not translate to your organization's internal regional structure.
+- Use the company's own regional names; do not translate to your organization's internal regional structure.
 - Include revenue and growth for each region if disclosed.
-- signal: infer from growth data — positive if organic growth > 0, negative if < 0, neutral if flat or mixed.
+- signal: infer from growth data: positive if organic growth > 0, negative if < 0, neutral if flat or mixed.
 - If only qualitative commentary exists for a region (no numbers), still create a RegionalData entry
   with revenue and growth_pct null, and set the signal based on the commentary.
 - commentary: capture any management quote or statement about this region's conditions or outlook,
@@ -111,7 +111,7 @@ QUALITATIVE SIGNALS
 - volume_vs_price: look for explicit breakdowns in earnings call transcripts or MD&A sections.
   Phrasing: "volume contributed X%, price/mix Y%", "organic growth driven by price".
 - inventory_dynamics: look for "channel inventory", "distributor inventory", "destocking", "inventory
-  normalization", "sell-in vs. sell-out". This is a leading indicator — capture it carefully.
+  normalization", "sell-in vs. sell-out". This is a leading indicator; capture it carefully.
 - pricing_commentary: record any mention of price increases, surcharges, or pricing pressure from competition.
 
 GUIDANCE
