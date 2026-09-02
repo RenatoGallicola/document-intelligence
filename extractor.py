@@ -9,8 +9,35 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from google.genai.errors import ClientError, ServerError
 
 load_dotenv()
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 logger = logging.getLogger(__name__)
+
+_client: genai.Client | None = None
+_client_key: str | None = None
+
+
+def _get_client() -> genai.Client:
+    """
+    Return the Gemini client, building it on first use.
+
+    Built lazily on purpose: constructing it at import time raises when no key
+    is configured, which would make this module unimportable on a fresh clone
+    and in CI, and would leave the test suite unable to reach the pure parsing
+    helpers below.
+
+    The key the client was built with is remembered, so a key changed at
+    runtime (Settings -> API key) rebuilds the client instead of silently
+    continuing to use the old one.
+    """
+    global _client, _client_key
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        raise ValueError(
+            "GEMINI_API_KEY is not set. Add it to .env or set it from the Settings page."
+        )
+    if _client is None or _client_key != api_key:
+        _client = genai.Client(api_key=api_key)
+        _client_key = api_key
+    return _client
 
 
 def load_pdf(pdf_path: str) -> bytes:
@@ -46,7 +73,7 @@ def call_gemini(pdf_bytes: bytes, prompt: str, model_name: str) -> str:
     Retries on rate limiting (429) and server errors (5xx); fails immediately
     on permanent client errors like an invalid or missing API key.
     """
-    response = client.models.generate_content(
+    response = _get_client().models.generate_content(
         model=model_name,
         contents=[
             types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
@@ -105,7 +132,7 @@ def parse_response(raw_text: str, document_type: str) -> dict:
     except json.JSONDecodeError:
         try:
             return _repair_truncated_json(cleaned)
-        except (json.JSONDecodeError, Exception) as e:
+        except Exception as e:
             raise ValueError(f"Failed to parse Gemini response as JSON: {e}\nRaw response:\n{raw_text}")
 
 
