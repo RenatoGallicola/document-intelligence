@@ -84,14 +84,14 @@ class CompetitorReportSchema(BaseModel):
     operating_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating (EBIT) margin as decimal")
     ebitda_margin_pct: Optional[EvidencedValue] = Field(None, description="EBITDA margin as decimal. Use adjusted EBITDA if reported.")
 
-    # --- tools / construction-comparable segment ---
-    tools_segment_name: Optional[str] = Field(None, description="Name used by this company for the segment most comparable to the reference company's core business, e.g. 'Industrial Products'")
-    tools_segment_revenue: Optional[EvidencedValue] = Field(None, description="Revenue of the tools/construction segment in millions")
-    tools_segment_yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="Reported YoY growth of the tools segment as decimal")
-    tools_segment_organic_growth_pct: Optional[EvidencedValue] = Field(None, description="Organic YoY growth of the tools segment as decimal. Only extract if explicitly stated.")
-    tools_segment_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating margin of the tools segment as decimal")
+    # --- segment comparable to the benchmarked business ---
+    benchmark_segment_name: Optional[str] = Field(None, description="Name used by this company for the segment most comparable to the business being benchmarked, e.g. 'Industrial Products'")
+    benchmark_segment_revenue: Optional[EvidencedValue] = Field(None, description="Revenue of the benchmark segment in millions")
+    benchmark_segment_yoy_growth_pct: Optional[EvidencedValue] = Field(None, description="Reported YoY growth of the benchmark segment as decimal")
+    benchmark_segment_organic_growth_pct: Optional[EvidencedValue] = Field(None, description="Organic YoY growth of the benchmark segment as decimal. Only extract if explicitly stated.")
+    benchmark_segment_margin_pct: Optional[EvidencedValue] = Field(None, description="Operating margin of the benchmark segment as decimal")
     professional_revenue: Optional[EvidencedValue] = Field(None, description="Revenue attributable specifically to professional/commercial end users in millions, if separately disclosed")
-    professional_vs_diy_mix: Optional[EvidencedStr] = Field(None, description="Description of professional vs. consumer/DIY revenue split if reported, e.g. '60% professional, 40% consumer'")
+    customer_mix: Optional[EvidencedStr] = Field(None, description="Professional/commercial vs. consumer revenue split if reported, e.g. '60% professional, 40% consumer'")
 
     # --- order dynamics ---
     order_intake_mln: Optional[EvidencedValue] = Field(None, description="Order intake / new orders received in the period in millions. Relevant for capital goods / order-based companies. Leave null if not reported.")
@@ -104,8 +104,8 @@ class CompetitorReportSchema(BaseModel):
     regional_breakdown: list[RegionalData] = Field(default_factory=list, description="Revenue and growth by geographic region, using the company's own regional structure")
 
     # --- qualitative demand signals ---
-    construction_demand_signal: Optional[EvidencedStr] = Field(None, description="Management commentary on overall construction market conditions, max 2 sentences")
-    professional_demand_signal: Optional[EvidencedStr] = Field(None, description="Commentary specific to professional/industrial tool demand, distinct from consumer/DIY, max 2 sentences")
+    end_market_demand_signal: Optional[EvidencedStr] = Field(None, description="Management commentary on overall conditions in the company's main end markets, max 2 sentences")
+    professional_demand_signal: Optional[EvidencedStr] = Field(None, description="Commentary specific to professional/industrial demand, distinct from consumer demand, max 2 sentences")
     volume_vs_price: Optional[EvidencedStr] = Field(None, description="Decomposition of revenue growth into volume and price components, e.g. 'volume +3%, price +2%'")
     pricing_commentary: Optional[EvidencedStr] = Field(None, description="Commentary on pricing power, price increases or decreases taken, competitive pricing environment")
     inventory_dynamics: Optional[EvidencedStr] = Field(None, description="Channel inventory levels, destocking or restocking commentary, e.g. 'distributors completed destocking in Q3'")

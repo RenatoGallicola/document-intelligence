@@ -1,5 +1,5 @@
 COMPETITOR_REPORT_INSTRUCTIONS = """
-Domain rules for competitor financial reports in the professional power tools / construction equipment industry:
+Domain rules for competitor financial reports (annual reports, earnings releases, 10-K filings):
 
 NUMERIC CONVENTIONS
 - Revenue: extract in millions, in the currency stated in report_currency
@@ -12,8 +12,8 @@ NUMERIC CONVENTIONS
 PROXY AND FALLBACK VALUES
 - Always prefer a populated value over null. If exact data for a field is unavailable, use the
   best available proxy and document it clearly in extraction_notes.
-- tools_segment_*: if the exact division is not separately disclosed (e.g. it is nested inside a
-  larger reporting segment), use the parent segment as a proxy. Set tools_segment_name to
+- benchmark_segment_*: if the exact division is not separately disclosed (e.g. it is nested inside a
+  larger reporting segment), use the parent segment as a proxy. Set benchmark_segment_name to
   "<ParentSegmentName> (proxy for <ActualDivisionName>)" and explain the proxy in extraction_notes.
 - Exception for *_organic_growth_pct: NEVER calculate or infer. Only populate if explicitly stated.
   See ORGANIC GROWTH section below for full search guidance.
@@ -77,14 +77,15 @@ ORDER DYNAMICS
   that do not report order intake as a metric.
 - order_intake is a 1-2 quarter leading indicator of future revenue; capture it carefully.
 
-TOOLS SEGMENT MAPPING
-- Map the segment most comparable to the reference company's core business to tools_segment_*.
+BENCHMARK SEGMENT
+- Map the segment most comparable to the business being benchmarked to benchmark_segment_*.
+  Reporting structures change over time, so check the mapping in every report.
 - If the exact division is not separately reported, apply the proxy rule above.
-- Record the exact name (or proxy name) in tools_segment_name.
+- Record the exact name (or proxy name) in benchmark_segment_name.
 
-PROFESSIONAL vs. DIY
+PROFESSIONAL vs. CONSUMER
 - professional_revenue: only populate if the company separately discloses professional-end revenue.
-- professional_vs_diy_mix: include any stated percentage or qualitative description of the split.
+- customer_mix: include any stated percentage or qualitative description of the split.
 
 REGIONAL BREAKDOWN
 - Use the company's own regional names; do not translate to your organization's internal regional structure.
@@ -96,8 +97,7 @@ REGIONAL BREAKDOWN
   max 1-2 sentences. Leave null only if no regional commentary exists.
 
 QUALITATIVE SIGNALS
-- construction_demand_signal: focus on non-residential and infrastructure construction. Ignore residential
-  unless specifically mentioned as relevant to tools demand.
+- end_market_demand_signal: summarise management's view of demand in the company's main end markets.
 - volume_vs_price: look for explicit breakdowns in earnings call transcripts or MD&A sections.
   Phrasing: "volume contributed X%, price/mix Y%", "organic growth driven by price".
 - inventory_dynamics: look for "channel inventory", "distributor inventory", "destocking", "inventory
